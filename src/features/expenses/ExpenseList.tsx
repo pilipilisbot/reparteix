@@ -123,7 +123,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
                   </div>
                   <div className="space-y-1">
                     <Label>Qui ha pagat?</Label>
-                    <Select value={payerId} onValueChange={setPayerId} required>
+                    <Select value={payerId} onValueChange={setPayerId}>
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Selecciona..." />
                       </SelectTrigger>
