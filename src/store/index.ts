@@ -1,6 +1,6 @@
 import { create } from 'zustand'
-import type { Group, Expense, Payment, Member } from '../domain/entities'
-import { db } from '../infra/db'
+import type { Group, Expense, Payment } from '../domain/entities'
+import { reparteix } from '../sdk'
 
 interface AppState {
   groups: Group[]
@@ -23,19 +23,6 @@ interface AppState {
   setCurrentGroup: (groupId: string | null) => void
 }
 
-const COLORS = [
-  '#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6',
-  '#8b5cf6', '#ef4444', '#14b8a6', '#f97316', '#06b6d4',
-]
-
-function generateId(): string {
-  return crypto.randomUUID()
-}
-
-function now(): string {
-  return new Date().toISOString()
-}
-
 export const useStore = create<AppState>((set, get) => ({
   groups: [],
   expenses: [],
@@ -43,130 +30,66 @@ export const useStore = create<AppState>((set, get) => ({
   currentGroupId: null,
 
   loadGroups: async () => {
-    const groups = await db.groups.filter((g) => !g.deleted).toArray()
+    const groups = await reparteix.listGroups()
     set({ groups })
   },
 
   loadGroupData: async (groupId: string) => {
-    const expenses = await db.expenses
-      .where('groupId')
-      .equals(groupId)
-      .filter((e) => !e.deleted)
-      .toArray()
-    const payments = await db.payments
-      .where('groupId')
-      .equals(groupId)
-      .filter((p) => !p.deleted)
-      .toArray()
+    const [expenses, payments] = await Promise.all([
+      reparteix.listExpenses(groupId),
+      reparteix.listPayments(groupId),
+    ])
     set({ expenses, payments, currentGroupId: groupId })
   },
 
   addGroup: async (name: string, currency: string) => {
-    const timestamp = now()
-    const group: Group = {
-      id: generateId(),
-      name,
-      currency,
-      members: [],
-      createdAt: timestamp,
-      updatedAt: timestamp,
-      deleted: false,
-    }
-    await db.groups.add(group)
+    const group = await reparteix.createGroup(name, currency)
     await get().loadGroups()
     return group
   },
 
   deleteGroup: async (id: string) => {
-    const group = await db.groups.get(id)
-    if (group) {
-      await db.groups.update(id, { deleted: true, updatedAt: now() })
-      await get().loadGroups()
-    }
+    await reparteix.deleteGroup(id)
+    await get().loadGroups()
   },
 
   addMember: async (groupId: string, name: string) => {
-    const group = await db.groups.get(groupId)
-    if (!group) return
-
-    const timestamp = now()
-    const member: Member = {
-      id: generateId(),
-      name,
-      color: COLORS[group.members.length % COLORS.length],
-      createdAt: timestamp,
-      updatedAt: timestamp,
-      deleted: false,
-    }
-    const updatedMembers = [...group.members, member]
-    await db.groups.update(groupId, {
-      members: updatedMembers,
-      updatedAt: timestamp,
-    })
+    await reparteix.addMember(groupId, name)
     await get().loadGroups()
     await get().loadGroupData(groupId)
   },
 
   removeMember: async (groupId: string, memberId: string) => {
-    const group = await db.groups.get(groupId)
-    if (!group) return
-
-    const updatedMembers = group.members.map((m) =>
-      m.id === memberId ? { ...m, deleted: true, updatedAt: now() } : m,
-    )
-    await db.groups.update(groupId, {
-      members: updatedMembers,
-      updatedAt: now(),
-    })
+    await reparteix.removeMember(groupId, memberId)
     await get().loadGroups()
     await get().loadGroupData(groupId)
   },
 
   addExpense: async (expense) => {
-    const timestamp = now()
-    const newExpense: Expense = {
-      ...expense,
-      id: generateId(),
-      createdAt: timestamp,
-      updatedAt: timestamp,
-      deleted: false,
-    }
-    await db.expenses.add(newExpense)
+    await reparteix.addExpense(expense)
     await get().loadGroupData(expense.groupId)
   },
 
   updateExpense: async (expense) => {
-    await db.expenses.update(expense.id, { ...expense, updatedAt: now() })
+    await reparteix.updateExpense(expense)
     await get().loadGroupData(expense.groupId)
   },
 
   deleteExpense: async (id: string) => {
-    const expense = await db.expenses.get(id)
-    if (expense) {
-      await db.expenses.update(id, { deleted: true, updatedAt: now() })
-      await get().loadGroupData(expense.groupId)
-    }
+    const expense = get().expenses.find((e) => e.id === id)
+    await reparteix.deleteExpense(id)
+    if (expense) await get().loadGroupData(expense.groupId)
   },
 
   addPayment: async (payment) => {
-    const timestamp = now()
-    const newPayment: Payment = {
-      ...payment,
-      id: generateId(),
-      createdAt: timestamp,
-      updatedAt: timestamp,
-      deleted: false,
-    }
-    await db.payments.add(newPayment)
+    await reparteix.addPayment(payment)
     await get().loadGroupData(payment.groupId)
   },
 
   deletePayment: async (id: string) => {
-    const payment = await db.payments.get(id)
-    if (payment) {
-      await db.payments.update(id, { deleted: true, updatedAt: now() })
-      await get().loadGroupData(payment.groupId)
-    }
+    const payment = get().payments.find((p) => p.id === id)
+    await reparteix.deletePayment(id)
+    if (payment) await get().loadGroupData(payment.groupId)
   },
 
   setCurrentGroup: (groupId) => {
