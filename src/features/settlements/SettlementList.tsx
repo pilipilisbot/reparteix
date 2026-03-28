@@ -1,6 +1,18 @@
 import { useState } from 'react'
+import { ArrowRight, Plus, Trash2 } from 'lucide-react'
 import type { Group } from '../../domain/entities'
 import { useStore } from '../../store'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
   EUR: '€',
@@ -54,84 +66,85 @@ export function SettlementList({ group }: SettlementListProps) {
       ) : (
         <>
           {!showForm ? (
-            <button
+            <Button
               onClick={() => setShowForm(true)}
-              className="w-full mb-4 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors"
+              className="w-full mb-4 bg-emerald-600 hover:bg-emerald-700"
             >
-              + Nou pagament
-            </button>
+              <Plus className="mr-2 h-4 w-4" />
+              Nou pagament
+            </Button>
           ) : (
-            <form onSubmit={handleSubmit} className="mb-6 p-4 bg-gray-50 rounded-lg border">
-              <h3 className="font-semibold mb-3">Nou pagament</h3>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Qui paga?
-                  </label>
-                  <select
-                    value={fromId}
-                    onChange={(e) => setFromId(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md"
-                    required
-                  >
-                    <option value="">Selecciona...</option>
-                    {activeMembers.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    A qui?
-                  </label>
-                  <select
-                    value={toId}
-                    onChange={(e) => setToId(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md"
-                    required
-                  >
-                    <option value="">Selecciona...</option>
-                    {activeMembers
-                      .filter((m) => m.id !== fromId)
-                      .map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.name}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="Import"
-                    step="0.01"
-                    min="0.01"
-                    className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    required
-                  />
-                  <span className="flex items-center text-gray-500">{symbol}</span>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="submit"
-                    className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors"
-                  >
-                    Registrar pagament
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowForm(false)}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
-                  >
-                    Cancel·lar
-                  </button>
-                </div>
-              </div>
-            </form>
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Nou pagament</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="from-member">Qui paga?</Label>
+                    <Select value={fromId} onValueChange={setFromId} required>
+                      <SelectTrigger id="from-member">
+                        <SelectValue placeholder="Selecciona..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {activeMembers.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>
+                            {m.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="to-member">A qui?</Label>
+                    <Select value={toId} onValueChange={setToId} required>
+                      <SelectTrigger id="to-member">
+                        <SelectValue placeholder="Selecciona..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {activeMembers
+                          .filter((m) => m.id !== fromId)
+                          .map((m) => (
+                            <SelectItem key={m.id} value={m.id}>
+                              {m.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      placeholder="Import"
+                      step="0.01"
+                      min="0.01"
+                      className="flex-1"
+                      required
+                    />
+                    <span className="flex items-center text-muted-foreground">
+                      {symbol}
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="submit"
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                    >
+                      Registrar pagament
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => setShowForm(false)}
+                    >
+                      Cancel·lar
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
           )}
         </>
       )}
@@ -145,30 +158,33 @@ export function SettlementList({ group }: SettlementListProps) {
           {[...payments]
             .sort((a, b) => b.date.localeCompare(a.date))
             .map((payment) => (
-              <div
-                key={payment.id}
-                className="flex items-center justify-between p-3 bg-white rounded-lg border"
-              >
-                <div className="flex-1">
-                  <div className="font-medium">
-                    {getMemberName(payment.fromId)}{' '}
-                    <span className="text-gray-400">→</span>{' '}
-                    {getMemberName(payment.toId)}
+              <Card key={payment.id}>
+                <CardContent className="flex items-center justify-between p-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-1 font-medium">
+                      {getMemberName(payment.fromId)}
+                      <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                      {getMemberName(payment.toId)}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {payment.date}
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-500">{payment.date}</div>
-                </div>
-                <div className="text-right ml-4">
-                  <div className="font-semibold text-emerald-600">
-                    {payment.amount.toFixed(2)} {symbol}
+                  <div className="flex items-center gap-3 ml-4">
+                    <span className="font-semibold text-emerald-600">
+                      {payment.amount.toFixed(2)} {symbol}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => deletePayment(payment.id)}
+                      className="h-8 w-8 text-muted-foreground hover:text-red-500"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <button
-                    onClick={() => deletePayment(payment.id)}
-                    className="text-xs text-gray-400 hover:text-red-500 transition-colors"
-                  >
-                    Eliminar
-                  </button>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             ))}
         </div>
       )}
