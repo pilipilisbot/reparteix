@@ -73,27 +73,22 @@ Sortida:
 ## Estructura del projecte
 
 ```txt
-splitwise-browser/
+reparteix/
   src/
-    app/
+    components/ui/
     domain/
       entities/
       services/
-      sync/
     infra/
       db/
-      crypto/
-      sync/
     features/
       groups/
       expenses/
       balances/
       settlements/
-    shared/
-  docs/
-    architecture.md
-    data-model.md
-    sync-protocol.md
+    store/
+    lib/
+  .github/workflows/
   public/
 ```
 
