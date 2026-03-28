@@ -1,18 +1,19 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { ArrowLeft, Plus, X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { useStore } from '../../store'
 import { ExpenseList } from '../expenses/ExpenseList'
 import { BalanceView } from '../balances/BalanceView'
 import { SettlementList } from '../settlements/SettlementList'
-
-type Tab = 'expenses' | 'balances' | 'settlements'
 
 export function GroupDetail() {
   const { groupId } = useParams<{ groupId: string }>()
   const navigate = useNavigate()
   const { groups, loadGroups, loadGroupData, addMember, removeMember } = useStore()
   const [memberName, setMemberName] = useState('')
-  const [activeTab, setActiveTab] = useState<Tab>('expenses')
 
   const group = groups.find((g) => g.id === groupId)
 
@@ -46,16 +47,17 @@ export function GroupDetail() {
   return (
     <div className="max-w-2xl mx-auto p-4">
       <div className="flex items-center gap-3 mb-6">
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => navigate('/')}
-          className="p-2 hover:bg-gray-100 rounded-md transition-colors"
           aria-label="Tornar"
         >
-          ←
-        </button>
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
         <div>
           <h1 className="text-2xl font-bold">{group.name}</h1>
-          <p className="text-sm text-gray-500">{group.currency}</p>
+          <p className="text-sm text-muted-foreground">{group.currency}</p>
         </div>
       </div>
 
@@ -75,70 +77,50 @@ export function GroupDetail() {
                 className="ml-1 hover:opacity-75"
                 aria-label={`Eliminar ${member.name}`}
               >
-                ×
+                <X className="h-3 w-3" />
               </button>
             </span>
           ))}
         </div>
         <form onSubmit={handleAddMember} className="flex gap-2">
-          <input
+          <Input
             type="text"
             value={memberName}
             onChange={(e) => setMemberName(e.target.value)}
             placeholder="Nom del membre"
-            className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="flex-1"
           />
-          <button
-            type="submit"
-            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
-          >
+          <Button type="submit">
+            <Plus className="h-4 w-4 mr-1" />
             Afegir
-          </button>
+          </Button>
         </form>
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b mb-4">
-        <button
-          onClick={() => setActiveTab('expenses')}
-          className={`px-4 py-2 font-medium transition-colors ${
-            activeTab === 'expenses'
-              ? 'border-b-2 border-indigo-600 text-indigo-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          Despeses
-        </button>
-        <button
-          onClick={() => setActiveTab('balances')}
-          className={`px-4 py-2 font-medium transition-colors ${
-            activeTab === 'balances'
-              ? 'border-b-2 border-indigo-600 text-indigo-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          Balanços
-        </button>
-        <button
-          onClick={() => setActiveTab('settlements')}
-          className={`px-4 py-2 font-medium transition-colors ${
-            activeTab === 'settlements'
-              ? 'border-b-2 border-emerald-600 text-emerald-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          Pagaments
-        </button>
-      </div>
+      <Tabs defaultValue="expenses">
+        <TabsList className="w-full">
+          <TabsTrigger value="expenses" className="flex-1">
+            Despeses
+          </TabsTrigger>
+          <TabsTrigger value="balances" className="flex-1">
+            Balanços
+          </TabsTrigger>
+          <TabsTrigger value="settlements" className="flex-1">
+            Pagaments
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Tab content */}
-      {activeTab === 'expenses' ? (
-        <ExpenseList group={group} />
-      ) : activeTab === 'balances' ? (
-        <BalanceView group={group} />
-      ) : (
-        <SettlementList group={group} />
-      )}
+        <TabsContent value="expenses">
+          <ExpenseList group={group} />
+        </TabsContent>
+        <TabsContent value="balances">
+          <BalanceView group={group} />
+        </TabsContent>
+        <TabsContent value="settlements">
+          <SettlementList group={group} />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
