@@ -1,10 +1,16 @@
 import { useState } from 'react'
+import { ArrowRight, Check } from 'lucide-react'
 import type { Group } from '../../domain/entities'
 import { useStore } from '../../store'
 import {
   calculateBalances,
   calculateSettlements,
 } from '../../domain/services/balances'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
   EUR: '€',
@@ -49,12 +55,16 @@ export function BalanceView({ group }: BalanceViewProps) {
   return (
     <div>
       {/* Summary */}
-      <div className="mb-6 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
-        <div className="text-sm text-indigo-600 font-medium">Total despeses</div>
-        <div className="text-2xl font-bold text-indigo-800">
-          {totalExpenses.toFixed(2)} {symbol}
-        </div>
-      </div>
+      <Card className="mb-6 border-indigo-100 bg-indigo-50">
+        <CardHeader className="pb-2">
+          <CardDescription className="text-indigo-600 font-medium">
+            Total despeses
+          </CardDescription>
+          <CardTitle className="text-2xl text-indigo-800">
+            {totalExpenses.toFixed(2)} {symbol}
+          </CardTitle>
+        </CardHeader>
+      </Card>
 
       {/* Balances */}
       <h3 className="font-semibold mb-3">Balanç per membre</h3>
@@ -66,34 +76,34 @@ export function BalanceView({ group }: BalanceViewProps) {
             const member = activeMembers.find((m) => m.id === balance.memberId)
             if (!member) return null
             return (
-              <div
-                key={balance.memberId}
-                className="flex items-center justify-between p-3 bg-white rounded-lg border"
-              >
-                <div className="flex items-center gap-2">
+              <Card key={balance.memberId}>
+                <CardContent className="flex items-center justify-between p-3">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: member.color }}
+                    />
+                    <span className="font-medium">{member.name}</span>
+                  </div>
                   <span
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: member.color }}
-                  />
-                  <span className="font-medium">{member.name}</span>
-                </div>
-                <span
-                  className={`font-semibold ${
-                    balance.total > 0
-                      ? 'text-green-600'
-                      : balance.total < 0
-                        ? 'text-red-600'
-                        : 'text-gray-500'
-                  }`}
-                >
-                  {balance.total > 0 ? '+' : ''}
-                  {balance.total.toFixed(2)} {symbol}
-                </span>
-              </div>
+                    className={cn(
+                      'font-semibold',
+                      balance.total > 0 && 'text-green-600',
+                      balance.total < 0 && 'text-red-600',
+                      balance.total === 0 && 'text-gray-500',
+                    )}
+                  >
+                    {balance.total > 0 ? '+' : ''}
+                    {balance.total.toFixed(2)} {symbol}
+                  </span>
+                </CardContent>
+              </Card>
             )
           })}
         </div>
       )}
+
+      <Separator className="my-6" />
 
       {/* Settlements */}
       <h3 className="font-semibold mb-3">Transferències suggerides</h3>
@@ -104,34 +114,36 @@ export function BalanceView({ group }: BalanceViewProps) {
       ) : (
         <div className="space-y-2">
           {settlements.map((s, i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between p-3 bg-amber-50 rounded-lg border border-amber-100"
-            >
-              <div>
-                <span className="font-medium">{getMemberName(s.fromId)}</span>
-                <span className="text-gray-500"> → </span>
-                <span className="font-medium">{getMemberName(s.toId)}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-amber-700">
-                  {s.amount.toFixed(2)} {symbol}
-                </span>
-                {recordedIndex === i ? (
-                  <span className="px-2 py-1 text-xs text-emerald-600 font-medium">
-                    ✓ Fet!
-                  </span>
-                ) : (
-                  <button
-                    onClick={() => handleRecordPayment(s.fromId, s.toId, s.amount, i)}
-                    className="px-2 py-1 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-700 transition-colors"
-                    title="Registrar aquest pagament"
-                  >
-                    ✓ Pagar
-                  </button>
-                )}
-              </div>
-            </div>
+            <Card key={i} className="border-amber-100 bg-amber-50">
+              <CardContent className="flex items-center justify-between p-3">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-medium">{getMemberName(s.fromId)}</span>
+                  <ArrowRight className="h-4 w-4 text-gray-500" />
+                  <span className="font-medium">{getMemberName(s.toId)}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="border-amber-300 text-amber-700 font-semibold">
+                    {s.amount.toFixed(2)} {symbol}
+                  </Badge>
+                  {recordedIndex === i ? (
+                    <span className="flex items-center gap-1 px-2 py-1 text-xs text-emerald-600 font-medium">
+                      <Check className="h-3 w-3" />
+                      Fet!
+                    </span>
+                  ) : (
+                    <Button
+                      size="sm"
+                      onClick={() => handleRecordPayment(s.fromId, s.toId, s.amount, i)}
+                      title="Registrar aquest pagament"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-xs h-7"
+                    >
+                      <Check className="h-3 w-3" />
+                      Pagar
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
