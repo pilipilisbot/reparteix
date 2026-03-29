@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/pilipilisbot/reparteix/compare/v1.6.0...v1.7.0) (2026-03-29)
+
+
+### Features
+
+* add confirmation dialog before deleting items ([b65b56f](https://github.com/pilipilisbot/reparteix/commit/b65b56f21a217c735d8d25159d324cf8c270f189))
+
 # [1.6.0](https://github.com/pilipilisbot/reparteix/compare/v1.5.0...v1.6.0) (2026-03-29)
 
 
