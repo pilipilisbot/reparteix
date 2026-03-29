@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Plus, Trash2, Camera, X } from 'lucide-react'
 import type { Group } from '../../domain/entities'
 import { useStore } from '../../store'
@@ -36,6 +36,18 @@ export function ExpenseList({ group }: ExpenseListProps) {
   const [viewingReceipt, setViewingReceipt] = useState<string | null>(null)
   const [receiptError, setReceiptError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const triggerButtonRef = useRef<HTMLButtonElement | null>(null)
+  const modalRef = useRef<HTMLDivElement>(null)
+
+  // Focus modal when it opens; restore focus to trigger button when it closes
+  useEffect(() => {
+    if (viewingReceipt) {
+      modalRef.current?.focus()
+    } else {
+      triggerButtonRef.current?.focus()
+      triggerButtonRef.current = null
+    }
+  }, [viewingReceipt])
 
   const activeMembers = group.members.filter((m) => !m.deleted)
   const symbol = CURRENCY_SYMBOLS[group.currency] ?? group.currency
@@ -291,7 +303,10 @@ export function ExpenseList({ group }: ExpenseListProps) {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => expense.receiptImage && setViewingReceipt(expense.receiptImage)}
+                          onClick={(e) => {
+                            triggerButtonRef.current = e.currentTarget
+                            setViewingReceipt(expense.receiptImage!)
+                          }}
                           aria-label="Veure tiquet"
                           className="h-auto px-1 py-0 text-xs text-muted-foreground hover:text-indigo-600"
                         >
@@ -318,12 +333,19 @@ export function ExpenseList({ group }: ExpenseListProps) {
       {/* Receipt viewer modal */}
       {viewingReceipt && (
         <div
+          ref={modalRef}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
           role="dialog"
+          aria-modal="true"
           aria-label="Visor del tiquet"
-          tabIndex={0}
+          tabIndex={-1}
           onClick={() => setViewingReceipt(null)}
-          onKeyDown={(e) => e.key === 'Escape' && setViewingReceipt(null)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setViewingReceipt(null)
+            }
+          }}
         >
           <div
             className="relative max-w-[90vw] max-h-[90vh]"
