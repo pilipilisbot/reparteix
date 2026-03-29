@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/pilipilisbot/reparteix/compare/v1.0.0...v1.1.0) (2026-03-29)
+
+
+### Features
+
+* prevent deleting members with movements and allow renaming ([a92c769](https://github.com/pilipilisbot/reparteix/commit/a92c7693ca5ace41e1ec9b62d2aa20cff3c2c63d))
+
 # 1.0.0 (2026-03-29)
 
 
