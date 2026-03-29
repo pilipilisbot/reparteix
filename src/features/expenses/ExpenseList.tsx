@@ -34,6 +34,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
   const [showForm, setShowForm] = useState(false)
   const [receiptImage, setReceiptImage] = useState<string | null>(null)
   const [viewingReceipt, setViewingReceipt] = useState<string | null>(null)
+  const [receiptError, setReceiptError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const activeMembers = group.members.filter((m) => !m.deleted)
@@ -61,8 +62,6 @@ export function ExpenseList({ group }: ExpenseListProps) {
     setReceiptError(null)
     setShowForm(false)
   }
-
-  const [receiptError, setReceiptError] = useState<string | null>(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -292,7 +291,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setViewingReceipt(expense.receiptImage!)}
+                          onClick={() => expense.receiptImage && setViewingReceipt(expense.receiptImage)}
                           aria-label="Veure tiquet"
                           className="h-auto px-1 py-0 text-xs text-muted-foreground hover:text-indigo-600"
                         >
@@ -320,7 +319,11 @@ export function ExpenseList({ group }: ExpenseListProps) {
       {viewingReceipt && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          role="dialog"
+          aria-label="Visor del tiquet"
+          tabIndex={0}
           onClick={() => setViewingReceipt(null)}
+          onKeyDown={(e) => e.key === 'Escape' && setViewingReceipt(null)}
         >
           <div
             className="relative max-w-[90vw] max-h-[90vh]"
