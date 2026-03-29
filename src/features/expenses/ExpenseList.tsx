@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Plus, Trash2, Camera, X } from 'lucide-react'
+import { Plus, Trash2, Camera, ImagePlus, X } from 'lucide-react'
 import type { Group } from '../../domain/entities'
 import { useStore } from '../../store'
 import { cn } from '@/lib/utils'
@@ -38,6 +38,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
   const [viewingReceipt, setViewingReceipt] = useState<string | null>(null)
   const [receiptError, setReceiptError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
   const modalRef = useRef<HTMLDivElement>(null)
 
   // Focus modal when it opens
@@ -287,6 +288,14 @@ export function ExpenseList({ group }: ExpenseListProps) {
                       className="hidden"
                       onChange={handleFileChange}
                     />
+                    <input
+                      ref={cameraInputRef}
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={handleFileChange}
+                    />
                     {receiptImage ? (
                       <div className="relative inline-block">
                         <img
@@ -307,15 +316,26 @@ export function ExpenseList({ group }: ExpenseListProps) {
                         </button>
                       </div>
                     ) : (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        <Camera className="mr-2 h-4 w-4" />
-                        Afegir foto
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <ImagePlus className="mr-2 h-4 w-4" />
+                          Afegir foto
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => cameraInputRef.current?.click()}
+                        >
+                          <Camera className="mr-2 h-4 w-4" />
+                          Fer foto
+                        </Button>
+                      </div>
                     )}
                     {receiptError && (
                       <p className="text-xs text-red-500 mt-1">{receiptError}</p>
