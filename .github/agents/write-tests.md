@@ -105,3 +105,8 @@ Inspira't en `src/domain/services/balances.test.ts` per als patrons de factory, 
 - `src/test/setup.ts` importa `@testing-library/jest-dom/vitest` per als matchers (`toBeInTheDocument`, etc.).
 - `vite.config.ts` configura Vitest (entorn `jsdom`).
 - No cal importar `describe`, `it`, `expect` de Vitest: estan disponibles globalment.
+
+## Commits i fitxers d'agent
+
+- Usa sempre **Conventional Commits**: `test:` per a commits que només afegeixen o milloren tests (veure `.github/copilot-instructions.md`).
+- Si descobreixes un patró de test nou o una millora a la configuració de tests, **actualitza** `.github/agents/write-tests.md`.

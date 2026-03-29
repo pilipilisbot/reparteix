@@ -77,6 +77,11 @@ db.version(N).stores({
 - **Eliminar camp**: marca'l com a deprecated, no eliminat directament (LWW sync).
 - **Canviar tipus de camp**: incrementa versió Dexie i escriu migració si cal.
 
+## Commits i fitxers d'agent
+
+- Usa sempre **Conventional Commits**: `feat:` per a entitats/serveis nous, `fix:` per a correccions de schema (veure `.github/copilot-instructions.md`).
+- Si afegeixes una entitat que canvia l'arquitectura del domini o introdueix un patró nou, **actualitza** `.github/copilot-instructions.md` i/o `.github/agents/add-domain-entity.md`.
+
 ## Tests de serveis
 
 - Arxiu al costat: `src/domain/services/nomServei.test.ts`.

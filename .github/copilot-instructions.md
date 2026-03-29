@@ -74,6 +74,58 @@ src/
 - Paleta principal: `indigo-600` per a accions primàries, `red-500` per a accions destructives, `gray-*` per a text secundari.
 - Botons: `px-4 py-2 rounded-md transition-colors` com a base.
 
+## Versions i releases
+
+El projecte usa **[semantic-release](https://semantic-release.gitbook.io/semantic-release/)** per a versions i releases totalment automàtics. Cada cop que es fusiona una branca a `main`, el workflow de CI analitza els missatges de commit per determinar el bump de versió i publica el release a GitHub.
+
+### Format de commits obligatori (Conventional Commits)
+
+Tots els commits **han de** seguir el format [`Conventional Commits`](https://www.conventionalcommits.org/):
+
+```
+<type>[scope opcional]: <descripció breu>
+```
+
+| Prefix | Efecte |
+|--------|--------|
+| `fix:` | patch (`1.0.0` → `1.0.1`) |
+| `feat:` | minor (`1.0.0` → `1.1.0`) |
+| `BREAKING CHANGE` al footer o `!` | major (`1.0.0` → `2.0.0`) |
+| `chore:`, `docs:`, `refactor:`, `test:`, `style:` | sense release |
+
+Exemples:
+```bash
+feat: afegir exportació de despeses en CSV
+fix: corregir càlcul de balanços amb despeses eliminades
+feat!: canviar estructura de GroupMember (BREAKING CHANGE)
+chore: actualitzar dependències
+```
+
+### Com funciona el pipeline
+
+1. Merge a `main` → GH Actions executa lint → test → build → `npx semantic-release`
+2. semantic-release analitza els commits des de l'últim tag
+3. Si hi ha commits releasables: bumpa `package.json`, actualitza `CHANGELOG.md`, crea tag git i GitHub Release
+4. Els commits `[skip ci]` (generats automàticament pel release) no tornen a disparar el workflow
+
+La configuració es troba a `.releaserc.json`.
+
+## Actualització dels fitxers d'agent
+
+**Regla important:** Quan un agent (o @copilot) introdueixi un canvi que afecti les convencions, l'arquitectura, l'stack tècnic o el flux de treball del projecte, **ha d'actualitzar** els fitxers d'agent corresponents:
+
+- `.github/copilot-instructions.md` — convencions globals, stack, decisions de disseny
+- `.github/agents/add-feature.md` — passos i restriccions per a noves funcionalitats
+- `.github/agents/add-domain-entity.md` — normes d'entitats i serveis del domini
+- `.github/agents/fix-bug.md` — guia de diagnosi i metodologia de correcció
+- `.github/agents/write-tests.md` — patrons i convencions de tests
+
+Exemples de canvis que requereixen actualitzar els fitxers:
+- Afegir una nova dependència rellevant (nova llibreria d'UI, nova infra, etc.)
+- Canviar el patró d'accions del store
+- Canviar la política de migracions de Dexie
+- Modificar l'estructura de carpetes o el routing principal
+
 ## Comandes de desenvolupament
 
 ```bash

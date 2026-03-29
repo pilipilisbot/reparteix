@@ -80,3 +80,8 @@ npm run lint
 - No introdueixis logs de depuració (`console.log`) al codi de producció.
 - No canviïs el comportament de funcions no relacionades amb el bug.
 - No eliminis tests existents per a fer passar la suite.
+
+## Commits i fitxers d'agent
+
+- Usa sempre **Conventional Commits**: `fix:` per a correccions, `refactor:` per a millores sense canvi de comportament (veure `.github/copilot-instructions.md`).
+- Si el bug i la solució revelen un patró recurrent o una mala pràctica, **actualitza** `.github/agents/fix-bug.md` amb la solució a la secció "Errors freqüents i solucions".
