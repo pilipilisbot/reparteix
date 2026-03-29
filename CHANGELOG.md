@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/pilipilisbot/reparteix/compare/v1.1.0...v1.2.0) (2026-03-29)
+
+
+### Features
+
+* simplify group creation and add group settings page ([db163fc](https://github.com/pilipilisbot/reparteix/commit/db163fccbe08b87c3a74435e5ac6740052dc2252))
+
 # [1.1.0](https://github.com/pilipilisbot/reparteix/compare/v1.0.0...v1.1.0) (2026-03-29)
 
 
