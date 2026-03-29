@@ -64,3 +64,8 @@ nomAccio: async (param: string) => {
 - No modifiquis la lògica de càlcul de balanços (`calculateBalances`, `calculateSettlements`) a menys que sigui necessari per la funcionalitat.
 - Tota text de la UI ha d'estar en **català**.
 - No introdueixis efectes secundaris (network, DB) a `src/domain/`.
+
+## Commits i fitxers d'agent
+
+- Usa sempre **Conventional Commits**: `feat:`, `fix:`, `chore:`, etc. (veure secció "Versions i releases" a `.github/copilot-instructions.md`).
+- Si el teu canvi afecta convencions, arquitectura o flux de treball, **actualitza** els fitxers `.github/copilot-instructions.md` i/o el fitxer d'agent corresponent.
