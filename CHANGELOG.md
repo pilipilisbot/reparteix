@@ -1,3 +1,11 @@
+# [1.12.0](https://github.com/reparteix/reparteix/compare/v1.11.0...v1.12.0) (2026-03-30)
+
+
+### Features
+
+* millora disseny home – gradient header, empty state, progressive form ([17f8208](https://github.com/reparteix/reparteix/commit/17f82081730369fb88598b4b8de546c06d325ee2))
+* redesign GroupList home page for better UX ([99c25be](https://github.com/reparteix/reparteix/commit/99c25bea53f73c1cf014ef6cebd517e8300a37fb))
+
 # [1.11.0](https://github.com/reparteix/reparteix/compare/v1.10.0...v1.11.0) (2026-03-30)
 
 
