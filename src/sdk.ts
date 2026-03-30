@@ -1,14 +1,16 @@
-import type { Group, Expense, Payment, Member, GroupExport } from './domain/entities'
-import { GroupExportSchema } from './domain/entities'
+import type { Group, Expense, Payment, Member, GroupExport, SyncEnvelopeV1 } from './domain/entities'
+import { GroupExportSchema, SyncEnvelopeV1Schema } from './domain/entities'
 import {
   calculateBalances,
   calculateSettlements,
+  computeSyncMerge,
   type Balance,
   type Settlement,
+  type SyncReport,
 } from './domain/services'
 import { db } from './infra/db'
 
-export type { Group, Expense, Payment, Member, Balance, Settlement, GroupExport }
+export type { Group, Expense, Payment, Member, Balance, Settlement, GroupExport, SyncEnvelopeV1, SyncReport }
 export { calculateBalances, calculateSettlements }
 
 const COLORS = [
@@ -336,5 +338,77 @@ export const reparteix = {
     const result = await db.groups.get(data.group.id)
     if (!result) throw new Error('Import failed: group not found after write')
     return result
+  },
+
+  // ─── Sync ──────────────────────────────────────────────────────────
+
+  sync: {
+    /**
+     * Apply an incoming sync envelope to the local database.
+     * Validates with Zod, merges with LWW conflict resolution, checks referential integrity,
+     * and persists all valid changes in a single Dexie transaction.
+     * Returns a SyncReport summarising what was created, updated, skipped, conflicted or rejected.
+     */
+    async applyGroupJson(raw: unknown): Promise<SyncReport> {
+      const envelope = SyncEnvelopeV1Schema.parse(raw)
+
+      const localGroup = await db.groups.get(envelope.group.id)
+      const localExpenses = localGroup
+        ? await db.expenses.where('groupId').equals(envelope.group.id).toArray()
+        : []
+      const localPayments = localGroup
+        ? await db.payments.where('groupId').equals(envelope.group.id).toArray()
+        : []
+
+      const decision = computeSyncMerge(envelope, localGroup, localExpenses, localPayments)
+
+      await db.transaction('rw', [db.groups, db.expenses, db.payments], async () => {
+        // ── Group + Members ─────────────────────────────────────────
+        if (decision.groupAction !== 'conflict') {
+          await db.groups.put(decision.mergedGroup)
+        } else {
+          // On conflict keep local metadata but persist merged members
+          await db.groups.update(envelope.group.id, {
+            members: decision.mergedGroup.members,
+          })
+        }
+
+        // ── Expenses ────────────────────────────────────────────────
+        for (const item of decision.expenses) {
+          if (item.action === 'create' || item.action === 'update') {
+            await db.expenses.put(item.expense)
+          }
+        }
+
+        // ── Payments ────────────────────────────────────────────────
+        for (const item of decision.payments) {
+          if (item.action === 'create' || item.action === 'update') {
+            await db.payments.put(item.payment)
+          }
+        }
+      })
+
+      return decision.report
+    },
+
+    /**
+     * Preview the result of applying a sync envelope without persisting any changes.
+     * Useful for showing the user what would change before confirming.
+     * Returns the same SyncReport as applyGroupJson would, but performs no writes.
+     */
+    async previewGroupJson(raw: unknown): Promise<SyncReport> {
+      const envelope = SyncEnvelopeV1Schema.parse(raw)
+
+      const localGroup = await db.groups.get(envelope.group.id)
+      const localExpenses = localGroup
+        ? await db.expenses.where('groupId').equals(envelope.group.id).toArray()
+        : []
+      const localPayments = localGroup
+        ? await db.payments.where('groupId').equals(envelope.group.id).toArray()
+        : []
+
+      const decision = computeSyncMerge(envelope, localGroup, localExpenses, localPayments)
+      return decision.report
+    },
   },
 }

@@ -408,6 +408,296 @@ describe('reparteix SDK', () => {
     })
   })
 
+  // ─── Sync ────────────────────────────────────────────────────────
+
+  describe('sync', () => {
+    // ── helpers ───────────────────────────────────────────────────
+
+    function makeEnvelope(groupName: string = 'Sync test') {
+      return async () => {
+        const g = await reparteix.createGroup(groupName)
+        const anna = await reparteix.addMember(g.id, 'Anna')
+        const bernat = await reparteix.addMember(g.id, 'Bernat')
+        const expense = await reparteix.addExpense({
+          groupId: g.id,
+          description: 'Pizza',
+          amount: 30,
+          payerId: anna.id,
+          splitAmong: [anna.id, bernat.id],
+          date: '2024-06-01',
+        })
+        const payment = await reparteix.addPayment({
+          groupId: g.id,
+          fromId: bernat.id,
+          toId: anna.id,
+          amount: 15,
+          date: '2024-06-02',
+        })
+        const latestGroup = (await reparteix.getGroup(g.id))!
+        return {
+          version: 1 as const,
+          exportedAt: new Date().toISOString(),
+          group: latestGroup,
+          expenses: [expense],
+          payments: [payment],
+        }
+      }
+    }
+
+    it('rejects an invalid envelope schema', async () => {
+      await expect(reparteix.sync.applyGroupJson({ foo: 'bar' })).rejects.toThrow()
+    })
+
+    it('does not mutate anything on a failed sync', async () => {
+      const before = await reparteix.listGroups()
+      await expect(reparteix.sync.applyGroupJson({ foo: 'bar' })).rejects.toThrow()
+      const after = await reparteix.listGroups()
+      expect(after).toHaveLength(before.length)
+    })
+
+    it('creates a new group when it does not exist locally', async () => {
+      const build = makeEnvelope()
+      const envelope = await build()
+
+      // clear DB then apply
+      await db.groups.clear()
+      await db.expenses.clear()
+      await db.payments.clear()
+
+      const report = await reparteix.sync.applyGroupJson(envelope)
+
+      expect(report.created.groups).toBe(1)
+      expect(report.created.members).toBe(2)
+      expect(report.created.expenses).toBe(1)
+      expect(report.created.payments).toBe(1)
+
+      const groups = await reparteix.listGroups()
+      expect(groups).toHaveLength(1)
+      expect(groups[0].name).toBe('Sync test')
+    })
+
+    it('skips group and items when local version is newer', async () => {
+      const build = makeEnvelope('Grup')
+      const envelope = await build()
+
+      // bump local group to a newer timestamp
+      await reparteix.updateGroup(envelope.group.id, { name: 'Nom local nou' })
+
+      const report = await reparteix.sync.applyGroupJson(envelope)
+
+      expect(report.updated.groups).toBe(0)
+      expect(report.skipped.expenses).toBe(1)
+      expect(report.skipped.payments).toBe(1)
+
+      const g = await reparteix.getGroup(envelope.group.id)
+      expect(g!.name).toBe('Nom local nou')
+    })
+
+    it('updates group and items when remote version is newer', async () => {
+      const build = makeEnvelope('Grup')
+      const envelope = await build()
+
+      // Tamper: make everything in the envelope newer
+      const future = new Date(Date.now() + 60_000).toISOString()
+      const newerEnvelope = {
+        ...envelope,
+        group: {
+          ...envelope.group,
+          name: 'Nom remot nou',
+          updatedAt: future,
+          members: envelope.group.members.map((m) => ({ ...m, updatedAt: future })),
+        },
+        expenses: envelope.expenses.map((e) => ({
+          ...e,
+          description: 'Despesa actualitzada',
+          updatedAt: future,
+        })),
+        payments: envelope.payments.map((p) => ({ ...p, amount: 20, updatedAt: future })),
+      }
+
+      const report = await reparteix.sync.applyGroupJson(newerEnvelope)
+
+      expect(report.updated.groups).toBe(1)
+      expect(report.updated.members).toBeGreaterThanOrEqual(1)
+      expect(report.updated.expenses).toBe(1)
+      expect(report.updated.payments).toBe(1)
+
+      const g = await reparteix.getGroup(envelope.group.id)
+      expect(g!.name).toBe('Nom remot nou')
+    })
+
+    it('detects same-timestamp divergence as a conflict and does not overwrite', async () => {
+      const build = makeEnvelope('Grup')
+      const envelope = await build()
+
+      // Tamper: same timestamp but different group name
+      const sameTs = envelope.group.updatedAt
+      const conflictingEnvelope = {
+        ...envelope,
+        group: { ...envelope.group, name: 'Nom conflictiu', updatedAt: sameTs },
+      }
+
+      const report = await reparteix.sync.applyGroupJson(conflictingEnvelope)
+
+      expect(report.conflicts).toHaveLength(1)
+      expect(report.conflicts[0].entity).toBe('group')
+      expect(report.conflicts[0].reason).toBe('same_timestamp_divergence')
+
+      // Local name preserved
+      const g = await reparteix.getGroup(envelope.group.id)
+      expect(g!.name).toBe('Grup')
+    })
+
+    it('rejects expense with unknown payerId and continues with rest', async () => {
+      const build = makeEnvelope('Grup')
+      const envelope = await build()
+
+      const bogusExpense = {
+        ...envelope.expenses[0],
+        id: 'bogus-expense',
+        payerId: 'unknown-member',
+      }
+      const envelopeWithBogus = {
+        ...envelope,
+        expenses: [...envelope.expenses, bogusExpense],
+      }
+
+      const report = await reparteix.sync.applyGroupJson(envelopeWithBogus)
+
+      expect(report.rejected).toHaveLength(1)
+      expect(report.rejected[0].entity).toBe('expense')
+      expect(report.rejected[0].id).toBe('bogus-expense')
+
+      // Valid expense was still applied
+      expect(report.skipped.expenses + report.created.expenses + report.updated.expenses).toBe(1)
+    })
+
+    it('rejects payment with unknown fromId and continues with rest', async () => {
+      const build = makeEnvelope('Grup')
+      const envelope = await build()
+
+      const bogusPayment = {
+        ...envelope.payments[0],
+        id: 'bogus-payment',
+        fromId: 'unknown-member',
+      }
+      const envelopeWithBogus = {
+        ...envelope,
+        payments: [...envelope.payments, bogusPayment],
+      }
+
+      const report = await reparteix.sync.applyGroupJson(envelopeWithBogus)
+
+      expect(report.rejected).toHaveLength(1)
+      expect(report.rejected[0].entity).toBe('payment')
+      expect(report.rejected[0].id).toBe('bogus-payment')
+    })
+
+    it('applies remote soft-delete when remote is newer', async () => {
+      const build = makeEnvelope('Grup')
+      const envelope = await build()
+
+      const future = new Date(Date.now() + 60_000).toISOString()
+      const deletedEnvelope = {
+        ...envelope,
+        expenses: envelope.expenses.map((e) => ({
+          ...e,
+          deleted: true,
+          updatedAt: future,
+        })),
+      }
+
+      await reparteix.sync.applyGroupJson(deletedEnvelope)
+
+      const expenses = await db.expenses
+        .where('groupId')
+        .equals(envelope.group.id)
+        .toArray()
+      expect(expenses[0].deleted).toBe(true)
+    })
+
+    it('creates a new member from remote that does not exist locally', async () => {
+      const build = makeEnvelope('Grup')
+      const envelope = await build()
+
+      const newMember = {
+        id: 'new-remote-member',
+        name: 'Carla',
+        color: '#10b981',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        deleted: false,
+      }
+      const envelopeWithExtra = {
+        ...envelope,
+        group: {
+          ...envelope.group,
+          members: [...envelope.group.members, newMember],
+        },
+      }
+
+      const report = await reparteix.sync.applyGroupJson(envelopeWithExtra)
+
+      expect(report.created.members).toBeGreaterThanOrEqual(1)
+      const g = await reparteix.getGroup(envelope.group.id)
+      const found = g!.members.find((m) => m.id === 'new-remote-member')
+      expect(found).toBeDefined()
+      expect(found!.name).toBe('Carla')
+    })
+
+    it('preview does not persist any changes', async () => {
+      const build = makeEnvelope('Grup')
+      const envelope = await build()
+
+      // clear and preview without applying
+      await db.groups.clear()
+      await db.expenses.clear()
+      await db.payments.clear()
+
+      const report = await reparteix.sync.previewGroupJson(envelope)
+
+      expect(report.created.groups).toBe(1)
+
+      // Nothing was actually written
+      const groups = await reparteix.listGroups()
+      expect(groups).toHaveLength(0)
+    })
+
+    it('preview returns same report as applyGroupJson without persisting', async () => {
+      const build = makeEnvelope('Grup')
+      const envelope = await build()
+
+      const future = new Date(Date.now() + 60_000).toISOString()
+      const newerEnvelope = {
+        ...envelope,
+        group: { ...envelope.group, name: 'Remot nou', updatedAt: future },
+      }
+
+      const previewReport = await reparteix.sync.previewGroupJson(newerEnvelope)
+      expect(previewReport.updated.groups).toBe(1)
+
+      // group name unchanged
+      const g = await reparteix.getGroup(envelope.group.id)
+      expect(g!.name).toBe('Grup')
+    })
+
+    it('handles envelope with no expenses or payments (minimal snapshot)', async () => {
+      const group = await reparteix.createGroup('Minimal')
+      const envelope = {
+        version: 1 as const,
+        exportedAt: new Date().toISOString(),
+        group: (await reparteix.getGroup(group.id))!,
+        expenses: [],
+        payments: [],
+      }
+
+      const report = await reparteix.sync.applyGroupJson(envelope)
+      expect(report.created.expenses).toBe(0)
+      expect(report.created.payments).toBe(0)
+      expect(report.rejected).toHaveLength(0)
+    })
+  })
+
   // ─── Import / Export ──────────────────────────────────────────────
 
   describe('import / export', () => {
