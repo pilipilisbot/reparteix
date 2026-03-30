@@ -24,8 +24,8 @@ export default defineConfig({
         background_color: '#ffffff',
         display: 'standalone',
         lang: 'ca',
-        scope: '/reparteix/',
-        start_url: '/reparteix/',
+        scope: '/',
+        start_url: '/',
         icons: [
           {
             src: 'pwa-192x192.png',
@@ -66,7 +66,7 @@ export default defineConfig({
       },
     }),
   ],
-  base: '/reparteix/',
+  base: '/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
