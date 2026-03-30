@@ -66,3 +66,19 @@ export const GroupExportSchema = z.object({
 })
 
 export type GroupExport = z.infer<typeof GroupExportSchema>
+
+export const SyncEnvelopeV1Schema = z.object({
+  version: z.literal(1),
+  source: z.string().optional(),
+  exportedAt: z.string().datetime(),
+  group: GroupSchema,
+  expenses: z.array(ExpenseSchema).default([]),
+  payments: z.array(PaymentSchema).default([]),
+  meta: z
+    .object({
+      mode: z.enum(['snapshot', 'patch']).default('snapshot'),
+    })
+    .optional(),
+})
+
+export type SyncEnvelopeV1 = z.infer<typeof SyncEnvelopeV1Schema>

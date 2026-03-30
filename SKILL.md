@@ -1,7 +1,7 @@
 ---
 name: reparteix
-description: Manage shared expenses — create groups, add members, track expenses (equal or proportional splits) and payments, calculate balances and minimum settlements. Export/import groups as JSON. Local-first, offline-capable PWA.
-version: 1.0.0
+description: Manage shared expenses — create groups, add members, track expenses (equal or proportional splits) and payments, calculate balances and minimum settlements. Export/import groups as JSON. Sync groups from external JSON snapshots with LWW merge. Local-first, offline-capable PWA.
+version: 1.1.0
 author: pilipilisbot
 tags:
   - expenses
@@ -39,6 +39,7 @@ Use this skill when the user wants to:
 - **Calculate minimum settlements** — find the fewest transfers needed to settle all debts.
 - **Export** a group and all its data to a JSON file for backup.
 - **Import** a group from a previously exported JSON file (Last-Write-Wins conflict resolution).
+- **Sync** a group from an external JSON snapshot using deterministic LWW merge with conflict detection and referential integrity checks.
 
 ## Project Setup
 
@@ -132,6 +133,13 @@ import { reparteix } from './src/sdk'
 |--------|-----------|-------------|
 | `exportGroup` | `(groupId: string) => Promise<GroupExport>` | Export a group with all its expenses and payments as a versioned JSON object |
 | `importGroup` | `(raw: unknown) => Promise<Group>` | Import a group from a `GroupExport` object. Validates with Zod, uses LWW for ID collisions, runs in a single transaction |
+
+### Sync
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `sync.applyGroupJson` | `(raw: unknown) => Promise<SyncReport>` | Apply an incoming `SyncEnvelopeV1` to the local database. LWW merge, conflict detection, referential integrity checks, Dexie transaction |
+| `sync.previewGroupJson` | `(raw: unknown) => Promise<SyncReport>` | Same as `applyGroupJson` but performs no writes — useful for showing a diff before confirming |
 
 ## Domain Entities
 
@@ -231,6 +239,34 @@ import { reparteix } from './src/sdk'
 }
 ```
 
+### SyncEnvelopeV1
+
+```typescript
+{
+  version: 1
+  source?: string       // optional origin/device identifier
+  exportedAt: string    // ISO 8601 datetime
+  group: Group
+  expenses: Expense[]
+  payments: Payment[]
+  meta?: {
+    mode?: 'snapshot' | 'patch'   // default: 'snapshot'
+  }
+}
+```
+
+### SyncReport
+
+```typescript
+{
+  created:  { groups: number; expenses: number; payments: number; members: number }
+  updated:  { groups: number; expenses: number; payments: number; members: number }
+  skipped:  { expenses: number; payments: number; members: number }
+  rejected: Array<{ entity: string; id?: string; reason: string }>
+  conflicts: Array<{ entity: string; id: string; reason: string }>
+}
+```
+
 ## Example Workflow
 
 Here is a typical workflow to manage a group dinner expense:
@@ -292,6 +328,7 @@ await reparteix.addPayment({
 - **Settlements**: Use greedy matching to minimize the number of transfers.
 - **Split types**: `equal` (default) divides the expense equally; `proportional` uses `splitProportions` weights.
 - **Import/Export**: Uses `schemaVersion: 1`. LWW (Last-Write-Wins by `updatedAt`) resolves ID collisions.
+- **Sync**: `SyncEnvelopeV1` (version: 1) — deterministic LWW merge, per-item referential integrity validation, Dexie transaction. Conflicts (same timestamp, different payload) are recorded but local data is preserved.
 
 ## Tech Stack
 
