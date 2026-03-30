@@ -20,7 +20,7 @@ function FileHandlerBridge() {
   if (status === 'importing') {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80">
-        <p className="text-lg font-medium">Importantant fitxer…</p>
+        <p className="text-lg font-medium">S'està important el fitxer…</p>
       </div>
     )
   }

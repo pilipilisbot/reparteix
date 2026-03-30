@@ -134,8 +134,10 @@ export const useStore = create<AppState>((set, get) => ({
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
+    const groupName = get().groups.find((g) => g.id === groupId)?.name ?? 'grup'
+    const slug = groupName.replace(/\s+/g, '-').toLowerCase()
     const date = new Date().toISOString().slice(0, 10)
-    a.download = `reparteix-export-${date}.reparteix.json`
+    a.download = `reparteix-export-${slug}-${date}.reparteix.json`
     a.click()
     URL.revokeObjectURL(url)
   },

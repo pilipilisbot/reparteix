@@ -313,6 +313,7 @@ export const reparteix = {
    * Validates with Zod before any writes.
    * Uses Last-Write-Wins (by updatedAt) for ID collisions.
    * The entire operation runs inside a Dexie transaction — no partial mutations.
+   * Returns the first imported group (all groups are persisted).
    */
   async importGroup(raw: unknown): Promise<Group> {
     // Normalise to canonical internal model
