@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/pilipilisbot/reparteix/compare/v1.7.0...v1.8.0) (2026-03-30)
+
+
+### Features
+
+* Import/Export JSON local per backup i migració ([7559da4](https://github.com/pilipilisbot/reparteix/commit/7559da413ffdf26f4c48a8b7cecdfc8915f1ee7a))
+
 # [1.7.0](https://github.com/pilipilisbot/reparteix/compare/v1.6.0...v1.7.0) (2026-03-29)
 
 
