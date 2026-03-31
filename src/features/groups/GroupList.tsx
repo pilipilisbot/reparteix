@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../../store'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Trash2, Users, ChevronRight, Upload } from 'lucide-react'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -78,14 +79,19 @@ export function GroupList() {
   const hasGroups = groups.length > 0
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/50">
       {/* Hero / Header */}
-      <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 text-white px-4 pt-10 pb-12">
+      <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 dark:from-indigo-800 dark:to-indigo-950 text-white px-4 pt-10 pb-12">
         <div className="max-w-2xl mx-auto">
-          <h1 className="text-4xl font-bold tracking-tight mb-2">🧾 Reparteix</h1>
-          <p className="text-indigo-200 text-base">
-            Gestiona despeses compartides de forma senzilla, local i privada.
-          </p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-4xl font-bold tracking-tight mb-2">🧾 Reparteix</h1>
+              <p className="text-indigo-200 text-base">
+                Gestiona despeses compartides de forma senzilla, local i privada.
+              </p>
+            </div>
+            <ThemeToggle />
+          </div>
         </div>
       </div>
 
@@ -115,7 +121,7 @@ export function GroupList() {
                       className="flex-1"
                       required
                     />
-                    <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white shrink-0">
+                    <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white shrink-0">
                       <Plus className="h-4 w-4 mr-1" />
                       Crear
                     </Button>
@@ -132,7 +138,7 @@ export function GroupList() {
                   <div className="flex items-center gap-2">
                     <Button
                       onClick={() => setShowForm(true)}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                      className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white"
                     >
                       <Plus className="h-4 w-4 mr-1" />
                       Nou grup
@@ -150,7 +156,7 @@ export function GroupList() {
                 )}
                 {/* Import status messages */}
                 {importStatus === 'ok' && (
-                  <p className="text-sm text-green-600 mt-2">Grup importat correctament. Redirigint…</p>
+                  <p className="text-sm text-success mt-2">Grup importat correctament. Redirigint…</p>
                 )}
                 {importStatus === 'error' && (
                   <p className="text-sm text-destructive mt-2">Error en importar: {importError}</p>
@@ -160,7 +166,7 @@ export function GroupList() {
 
             {/* Groups list */}
             <div className="mb-3 flex items-center gap-2">
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 Els teus grups
               </h2>
               <Badge variant="secondary" className="text-xs px-1.5 py-0">
@@ -179,11 +185,11 @@ export function GroupList() {
                       onClick={() => navigate(`/group/${group.id}`)}
                       className="flex-1 text-left flex items-center gap-3"
                     >
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 text-xl shrink-0">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-950 text-xl shrink-0">
                         {group.icon ? (
                           group.icon
                         ) : (
-                          <Users className="h-5 w-5 text-indigo-400" />
+                          <Users className="h-5 w-5 text-indigo-400 dark:text-indigo-300" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -241,7 +247,7 @@ export function GroupList() {
           /* Empty state */
           <Card className="shadow-md mt-2">
             <div className="flex flex-col items-center text-center py-14 px-6">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-indigo-50 mb-5 text-4xl">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-950 mb-5 text-4xl">
                 👥
               </div>
               <h2 className="text-xl font-bold mb-2">Crea el teu primer grup</h2>
@@ -259,7 +265,7 @@ export function GroupList() {
                     placeholder="Nom del grup…"
                     required
                   />
-                  <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white w-full">
+                  <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white w-full">
                     <Plus className="h-4 w-4 mr-1" />
                     Crear grup
                   </Button>
@@ -276,7 +282,7 @@ export function GroupList() {
                 <div className="flex flex-col items-center gap-3 w-full max-w-xs">
                   <Button
                     onClick={() => setShowForm(true)}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white w-full"
+                    className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white w-full"
                     size="lg"
                   >
                     <Plus className="h-4 w-4 mr-1" />
@@ -295,7 +301,7 @@ export function GroupList() {
 
               {/* Import status messages */}
               {importStatus === 'ok' && (
-                <p className="text-sm text-green-600 mt-4">Grup importat correctament. Redirigint…</p>
+                <p className="text-sm text-success mt-4">Grup importat correctament. Redirigint…</p>
               )}
               {importStatus === 'error' && (
                 <p className="text-sm text-destructive mt-4">Error en importar: {importError}</p>

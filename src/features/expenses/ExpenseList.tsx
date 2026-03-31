@@ -324,9 +324,9 @@ export function ExpenseList({ group }: ExpenseListProps) {
                             setReceiptError(null)
                           }}
                           aria-label="Eliminar foto"
-                          className="absolute top-1 right-1 bg-white rounded-full p-0.5 shadow hover:bg-gray-100"
+                          className="absolute top-1 right-1 bg-card rounded-full p-0.5 shadow hover:bg-muted"
                         >
-                          <X className="h-4 w-4 text-red-500" />
+                          <X className="h-4 w-4 text-destructive" />
                         </button>
                       </div>
                     ) : (
@@ -352,7 +352,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
                       </div>
                     )}
                     {receiptError && (
-                      <p className="text-xs text-red-500 mt-1">{receiptError}</p>
+                      <p className="text-xs text-destructive mt-1">{receiptError}</p>
                     )}
                   </div>
                   <div className="flex gap-2">
@@ -417,7 +417,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
                             size="sm"
                             onClick={() => setViewingReceipt(expense.receiptImage ?? null)}
                             aria-label="Veure tiquet"
-                            className="h-auto px-1 py-0 text-xs text-muted-foreground hover:text-indigo-600"
+                            className="h-auto px-1 py-0 text-xs text-muted-foreground hover:text-foreground"
                           >
                             <Camera className="h-3 w-3" />
                           </Button>
@@ -496,9 +496,9 @@ export function ExpenseList({ group }: ExpenseListProps) {
               type="button"
               onClick={() => setViewingReceipt(null)}
               aria-label="Tancar"
-              className="absolute top-2 right-2 bg-white rounded-full p-1 shadow hover:bg-gray-100"
+              className="absolute top-2 right-2 bg-card rounded-full p-1 shadow hover:bg-muted"
             >
-              <X className="h-5 w-5 text-gray-700" />
+              <X className="h-5 w-5 text-muted-foreground" />
             </button>
           </div>
         </div>
