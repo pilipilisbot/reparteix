@@ -1,3 +1,11 @@
+# [1.16.0](https://github.com/reparteix/reparteix/compare/v1.15.0...v1.16.0) (2026-03-31)
+
+
+### Features
+
+* fixed full-screen layout in GroupDetail — only tab content scrolls ([1037ae4](https://github.com/reparteix/reparteix/commit/1037ae41d61141f6445a592c67b3380684152d7a))
+* sticky group title header in GroupDetail view ([39eace6](https://github.com/reparteix/reparteix/commit/39eace6f5e1b507cdf65cd6d5622b45936b150d6))
+
 # [1.15.0](https://github.com/reparteix/reparteix/compare/v1.14.0...v1.15.0) (2026-03-31)
 
 
