@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { Plus, Trash2, Camera, ImagePlus, X } from 'lucide-react'
-import type { Group } from '../../domain/entities'
+import type { Group, Expense } from '../../domain/entities'
 import { useStore } from '../../store'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -160,6 +160,30 @@ export function ExpenseList({ group }: ExpenseListProps) {
       })
       .join(', ')
   }
+
+  const formatDate = (date: string) => {
+    const [year, month, day] = date.split('-').map(Number)
+    return new Date(year, month - 1, day).toLocaleDateString('ca-ES', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    })
+  }
+
+  const expensesByDay = useMemo(() => {
+    const sorted = [...expenses].sort((a, b) => b.date.localeCompare(a.date))
+    const groups: { date: string; items: Expense[] }[] = []
+    for (const expense of sorted) {
+      const last = groups[groups.length - 1]
+      if (last && last.date === expense.date) {
+        last.items.push(expense)
+      } else {
+        groups.push({ date: expense.date, items: [expense] })
+      }
+    }
+    return groups
+  }, [expenses])
 
   return (
     <div>
@@ -383,79 +407,86 @@ export function ExpenseList({ group }: ExpenseListProps) {
           Encara no hi ha despeses.
         </p>
       ) : (
-        <div className="space-y-2">
-          {expenses
-            .sort((a, b) => b.date.localeCompare(a.date))
-            .map((expense) => {
-              const proportionLabel = getProportionLabel(expense)
-              return (
-                <Card key={expense.id}>
-                  <CardContent className="flex items-center justify-between p-3">
-                    <div className="flex-1">
-                      <div className="font-medium">{expense.description}</div>
-                      <div className="text-sm text-muted-foreground flex items-center gap-1.5">
-                        <span
-                          className="inline-block h-2 w-2 rounded-full shrink-0"
-                          style={{ backgroundColor: getMemberColor(expense.payerId) }}
-                        />
-                        {getMemberName(expense.payerId)} ha pagat · {expense.date}
-                      </div>
-                      <div className="text-xs text-muted-foreground/70">
-                        {proportionLabel
-                          ? `Proporcions: ${proportionLabel}`
-                          : `Repartit entre: ${expense.splitAmong.map(getMemberName).join(', ')}`}
-                      </div>
-                    </div>
-                    <div className="text-right ml-4 flex flex-col items-end gap-1">
-                      <div className="font-semibold">
-                        {expense.amount.toFixed(2)} {symbol}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        {expense.receiptImage && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setViewingReceipt(expense.receiptImage ?? null)}
-                            aria-label="Veure tiquet"
-                            className="h-auto px-1 py-0 text-xs text-muted-foreground hover:text-foreground"
-                          >
-                            <Camera className="h-3 w-3" />
-                          </Button>
-                        )}
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-auto px-1 py-0 text-xs text-muted-foreground hover:text-destructive"
-                            >
-                              <Trash2 className="mr-1 h-3 w-3" />
-                              Eliminar
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Eliminar despesa</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Estàs segur que vols eliminar la despesa &quot;{expense.description}&quot;? Aquesta acció no es pot desfer.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel·lar</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => deleteExpense(expense.id)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+        <div className="space-y-4">
+          {expensesByDay.map(({ date, items }) => (
+            <div key={date}>
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground px-1 pb-1 capitalize">
+                {formatDate(date)}
+              </div>
+              <div className="space-y-2">
+                {items.map((expense) => {
+                  const proportionLabel = getProportionLabel(expense)
+                  return (
+                    <Card key={expense.id}>
+                      <CardContent className="flex items-center justify-between p-3">
+                        <div className="flex-1">
+                          <div className="font-medium">{expense.description}</div>
+                          <div className="text-sm text-muted-foreground flex items-center gap-1.5">
+                            <span
+                              className="inline-block h-2 w-2 rounded-full shrink-0"
+                              style={{ backgroundColor: getMemberColor(expense.payerId) }}
+                            />
+                            {getMemberName(expense.payerId)} ha pagat
+                          </div>
+                          <div className="text-xs text-muted-foreground/70">
+                            {proportionLabel
+                              ? `Proporcions: ${proportionLabel}`
+                              : `Repartit entre: ${expense.splitAmong.map(getMemberName).join(', ')}`}
+                          </div>
+                        </div>
+                        <div className="text-right ml-4 flex flex-col items-end gap-1">
+                          <div className="font-semibold">
+                            {expense.amount.toFixed(2)} {symbol}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {expense.receiptImage && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setViewingReceipt(expense.receiptImage ?? null)}
+                                aria-label="Veure tiquet"
+                                className="h-auto px-1 py-0 text-xs text-muted-foreground hover:text-foreground"
                               >
-                                Eliminar
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
+                                <Camera className="h-3 w-3" />
+                              </Button>
+                            )}
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-auto px-1 py-0 text-xs text-muted-foreground hover:text-destructive"
+                                >
+                                  <Trash2 className="mr-1 h-3 w-3" />
+                                  Eliminar
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Eliminar despesa</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Estàs segur que vols eliminar la despesa &quot;{expense.description}&quot;? Aquesta acció no es pot desfer.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel·lar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteExpense(expense.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Eliminar
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>                      </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
           {expenses.length > 0 && (
             <div className="flex items-center justify-between px-3 pt-1 text-sm font-medium text-muted-foreground">
               <span>Total ({expenses.length} despeses)</span>
