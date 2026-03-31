@@ -2,8 +2,6 @@
 
 Alternativa a Splitwise pensada per ús personal i grups petits, amb arquitectura **local-first** i funcionament **100% offline**. Les dades es guarden al navegador.
 
-🌐 **App en producció:** <https://pilipilisbot.github.io/reparteix/>
-
 ## Funcionalitats
 
 - Crear grups amb membres, icona i moneda (EUR / USD / GBP)
