@@ -71,7 +71,7 @@ export function SettlementList({ group }: SettlementListProps) {
   return (
     <div>
       {activeMembers.length < 2 ? (
-        <p className="text-gray-500 text-center py-4">
+        <p className="text-muted-foreground text-center py-4">
           Afegeix almenys 2 membres per poder registrar pagaments.
         </p>
       ) : (
@@ -79,7 +79,7 @@ export function SettlementList({ group }: SettlementListProps) {
           {!showForm ? (
             <Button
               onClick={() => setShowForm(true)}
-              className="w-full mb-4 bg-emerald-600 hover:bg-emerald-700"
+              className="w-full mb-4 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500"
             >
               <Plus className="mr-2 h-4 w-4" />
               Nou pagament
@@ -141,7 +141,7 @@ export function SettlementList({ group }: SettlementListProps) {
                   <div className="flex gap-2">
                     <Button
                       type="submit"
-                      className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500"
                     >
                       Registrar pagament
                     </Button>
@@ -161,7 +161,7 @@ export function SettlementList({ group }: SettlementListProps) {
       )}
 
       {payments.length === 0 ? (
-        <p className="text-gray-500 text-center py-4">
+        <p className="text-muted-foreground text-center py-4">
           Encara no hi ha pagaments registrats.
         </p>
       ) : (
@@ -182,7 +182,7 @@ export function SettlementList({ group }: SettlementListProps) {
                     </div>
                   </div>
                   <div className="flex items-center gap-3 ml-4">
-                    <span className="font-semibold text-emerald-600">
+                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">
                       {payment.amount.toFixed(2)} {symbol}
                     </span>
                     <AlertDialog>
@@ -190,7 +190,7 @@ export function SettlementList({ group }: SettlementListProps) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-red-500"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

@@ -181,7 +181,7 @@ function GroupSettingsForm({ group, groupId }: GroupSettingsFormProps) {
             Exportar JSON
           </Button>
           {exportStatus === 'ok' && (
-            <p className="text-sm text-green-600">Fitxer exportat correctament.</p>
+            <p className="text-sm text-success">Fitxer exportat correctament.</p>
           )}
           {exportStatus === 'error' && (
             <p className="text-sm text-destructive">Error en exportar. Torna-ho a intentar.</p>

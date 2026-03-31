@@ -55,12 +55,12 @@ export function BalanceView({ group }: BalanceViewProps) {
   return (
     <div>
       {/* Summary */}
-      <Card className="mb-6 border-indigo-100 bg-indigo-50">
+      <Card className="mb-6 border-indigo-100 dark:border-indigo-900 bg-indigo-50 dark:bg-indigo-950">
         <CardHeader className="pb-2">
-          <CardDescription className="text-indigo-600 font-medium">
+          <CardDescription className="text-indigo-600 dark:text-indigo-400 font-medium">
             Total despeses
           </CardDescription>
-          <CardTitle className="text-2xl text-indigo-800">
+          <CardTitle className="text-2xl text-indigo-800 dark:text-indigo-200">
             {totalExpenses.toFixed(2)} {symbol}
           </CardTitle>
         </CardHeader>
@@ -69,7 +69,7 @@ export function BalanceView({ group }: BalanceViewProps) {
       {/* Balances */}
       <h3 className="font-semibold mb-3">Balanç per membre</h3>
       {activeMembers.length === 0 ? (
-        <p className="text-gray-500 text-center py-4">No hi ha membres al grup.</p>
+        <p className="text-muted-foreground text-center py-4">No hi ha membres al grup.</p>
       ) : (
         <div className="space-y-2 mb-6">
           {balances.map((balance) => {
@@ -88,9 +88,9 @@ export function BalanceView({ group }: BalanceViewProps) {
                   <span
                     className={cn(
                       'font-semibold',
-                      balance.total > 0 && 'text-green-600',
-                      balance.total < 0 && 'text-red-600',
-                      balance.total === 0 && 'text-gray-500',
+                      balance.total > 0 && 'text-green-600 dark:text-green-400',
+                      balance.total < 0 && 'text-red-600 dark:text-red-400',
+                      balance.total === 0 && 'text-muted-foreground',
                     )}
                   >
                     {balance.total > 0 ? '+' : ''}
@@ -108,25 +108,25 @@ export function BalanceView({ group }: BalanceViewProps) {
       {/* Settlements */}
       <h3 className="font-semibold mb-3">Transferències suggerides</h3>
       {settlements.length === 0 ? (
-        <p className="text-gray-500 text-center py-4">
+        <p className="text-muted-foreground text-center py-4">
           Tot està equilibrat! 🎉
         </p>
       ) : (
         <div className="space-y-2">
           {settlements.map((s, i) => (
-            <Card key={i} className="border-amber-100 bg-amber-50">
+            <Card key={i} className="border-amber-100 dark:border-amber-900 bg-amber-50 dark:bg-amber-950">
               <CardContent className="flex items-center justify-between p-3">
                 <div className="flex items-center gap-1.5">
                   <span className="font-medium">{getMemberName(s.fromId)}</span>
-                  <ArrowRight className="h-4 w-4 text-gray-500" />
+                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">{getMemberName(s.toId)}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="border-amber-300 text-amber-700 font-semibold">
+                  <Badge variant="outline" className="border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 font-semibold">
                     {s.amount.toFixed(2)} {symbol}
                   </Badge>
                   {recordedIndex === i ? (
-                    <span className="flex items-center gap-1 px-2 py-1 text-xs text-emerald-600 font-medium">
+                    <span className="flex items-center gap-1 px-2 py-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
                       <Check className="h-3 w-3" />
                       Fet!
                     </span>
@@ -135,7 +135,7 @@ export function BalanceView({ group }: BalanceViewProps) {
                       size="sm"
                       onClick={() => handleRecordPayment(s.fromId, s.toId, s.amount, i)}
                       title="Registrar aquest pagament"
-                      className="bg-emerald-600 hover:bg-emerald-700 text-xs h-7"
+                      className="bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-xs h-7"
                     >
                       <Check className="h-3 w-3" />
                       Pagar

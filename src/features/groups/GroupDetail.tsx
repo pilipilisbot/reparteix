@@ -4,6 +4,7 @@ import { ArrowLeft, Plus, X, Pencil, Check, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { useStore } from '../../store'
 import { ExpenseList } from '../expenses/ExpenseList'
 import { BalanceView } from '../balances/BalanceView'
@@ -123,6 +124,7 @@ export function GroupDetail() {
         >
           <Settings className="h-5 w-5" />
         </Button>
+        <ThemeToggle />
       </div>
 
       {/* Members section */}
