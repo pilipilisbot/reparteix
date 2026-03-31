@@ -1,3 +1,10 @@
+## [1.12.3](https://github.com/reparteix/reparteix/compare/v1.12.2...v1.12.3) (2026-03-31)
+
+
+### Bug Fixes
+
+* corregir color text botons eliminar (destructive-foreground) ([a9fd543](https://github.com/reparteix/reparteix/commit/a9fd5430fc1be3e91ad2c7c95d3221da09228f94))
+
 ## [1.12.2](https://github.com/reparteix/reparteix/compare/v1.12.1...v1.12.2) (2026-03-31)
 
 
