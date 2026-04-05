@@ -82,6 +82,37 @@ describe('naiveSettlements', () => {
     expect(toA?.amount).toBeCloseTo(15, 1)
     expect(toB?.amount).toBeCloseTo(5, 1)
   })
+
+  it('conserves totals with small decimal balances (regression)', () => {
+    const balances: Balance[] = [
+      { memberId: 'a', total: 0.03 },
+      { memberId: 'b', total: 0.27 },
+      { memberId: 'c', total: -0.15 },
+      { memberId: 'd', total: -0.15 },
+    ]
+    const result = naiveSettlements(balances)
+
+    // a must receive its 0.03 — no creditor should be skipped
+    const receivedByA = result
+      .filter((s) => s.toId === 'a')
+      .reduce((sum, s) => sum + s.amount, 0)
+    const receivedByB = result
+      .filter((s) => s.toId === 'b')
+      .reduce((sum, s) => sum + s.amount, 0)
+    expect(receivedByA).toBeCloseTo(0.03, 2)
+    expect(receivedByB).toBeCloseTo(0.27, 2)
+
+    // Verify all balances settle to ~0
+    const netMap = new Map<string, number>()
+    for (const b of balances) netMap.set(b.memberId, b.total)
+    for (const s of result) {
+      netMap.set(s.fromId, (netMap.get(s.fromId) ?? 0) + s.amount)
+      netMap.set(s.toId, (netMap.get(s.toId) ?? 0) - s.amount)
+    }
+    for (const [, net] of netMap) {
+      expect(Math.abs(net)).toBeLessThan(0.02)
+    }
+  })
 })
 
 describe('minimizeSettlements (via calculateSettlements)', () => {

@@ -25,6 +25,8 @@ function round2(n: number): number {
 /**
  * Generate naive settlements where each debtor pays each creditor
  * proportionally to their share of total credit.
+ * Uses integer-cent arithmetic with a two-pass matrix allocation
+ * to guarantee exact conservation on both debtor and creditor sides.
  */
 export function naiveSettlements(balances: Balance[]): Settlement[] {
   const creditors: { id: string; amount: number }[] = []
@@ -40,17 +42,50 @@ export function naiveSettlements(balances: Balance[]): Settlement[] {
 
   if (creditors.length === 0 || debtors.length === 0) return []
 
-  const totalCredit = creditors.reduce((sum, c) => sum + c.amount, 0)
-  const settlements: Settlement[] = []
+  const totalCreditCents = Math.round(
+    creditors.reduce((sum, c) => sum + c.amount, 0) * 100,
+  )
+  const creditorCents = creditors.map((c) => Math.round(c.amount * 100))
+  const debtorCents = debtors.map((d) => Math.round(d.amount * 100))
+  const lastD = debtors.length - 1
+  const lastC = creditors.length - 1
 
-  for (const debtor of debtors) {
-    for (const creditor of creditors) {
-      const amount = round2(debtor.amount * (creditor.amount / totalCredit))
-      if (amount > EPSILON) {
+  // matrix[i][j] = cents debtor i pays creditor j
+  const matrix: number[][] = Array.from({ length: debtors.length }, () =>
+    new Array(creditors.length).fill(0),
+  )
+
+  // Pass 1: fill all rows except the last debtor
+  for (let i = 0; i < lastD; i++) {
+    let rowSum = 0
+    for (let j = 0; j < lastC; j++) {
+      matrix[i][j] = Math.floor(
+        (debtorCents[i] * creditorCents[j]) / totalCreditCents,
+      )
+      rowSum += matrix[i][j]
+    }
+    // Last creditor gets remainder to ensure row sum = debtorCents[i]
+    matrix[i][lastC] = debtorCents[i] - rowSum
+  }
+
+  // Pass 2: last debtor gets column remainders to ensure column sums match
+  for (let j = 0; j <= lastC; j++) {
+    let colSum = 0
+    for (let i = 0; i < lastD; i++) {
+      colSum += matrix[i][j]
+    }
+    matrix[lastD][j] = creditorCents[j] - colSum
+  }
+
+  // Convert to settlements, skipping zero-cent entries
+  const settlements: Settlement[] = []
+  for (let i = 0; i < debtors.length; i++) {
+    for (let j = 0; j < creditors.length; j++) {
+      if (matrix[i][j] >= 1) {
         settlements.push({
-          fromId: debtor.id,
-          toId: creditor.id,
-          amount,
+          fromId: debtors[i].id,
+          toId: creditors[j].id,
+          amount: matrix[i][j] / 100,
         })
       }
     }
@@ -69,9 +104,11 @@ export function calculateNetting(balances: Balance[]): NettingResult {
 
   const naiveCount = naive.length
   const minimizedCount = minimized.length
-  const savedTransfers = naiveCount - minimizedCount
+  const savedTransfers = Math.max(0, naiveCount - minimizedCount)
   const reductionPercent =
-    naiveCount > 0 ? round2((savedTransfers / naiveCount) * 100) : 0
+    naiveCount > 0
+      ? Math.min(100, Math.max(0, round2((savedTransfers / naiveCount) * 100)))
+      : 0
 
   return {
     naive,
