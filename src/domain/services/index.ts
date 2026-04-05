@@ -6,6 +6,13 @@ export {
 } from './balances'
 
 export {
+  naiveSettlements,
+  minimizeSettlements,
+  calculateNetting,
+  type NettingResult,
+} from './netting'
+
+export {
   computeSyncMerge,
   type SyncReport,
   type SyncMergeDecision,

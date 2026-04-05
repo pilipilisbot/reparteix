@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { ArrowRight, Check } from 'lucide-react'
+import { ArrowRight, Check, TrendingDown } from 'lucide-react'
 import type { Group } from '../../domain/entities'
 import { useStore } from '../../store'
 import {
   calculateBalances,
-  calculateSettlements,
 } from '../../domain/services/balances'
+import { calculateNetting } from '../../domain/services/netting'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -31,7 +31,7 @@ export function BalanceView({ group }: BalanceViewProps) {
   const symbol = CURRENCY_SYMBOLS[group.currency] ?? group.currency
 
   const balances = calculateBalances(memberIds, expenses, payments)
-  const settlements = calculateSettlements(balances)
+  const netting = calculateNetting(balances)
 
   const getMemberName = (id: string) =>
     group.members.find((m) => m.id === id)?.name ?? 'Desconegut'
@@ -105,15 +105,35 @@ export function BalanceView({ group }: BalanceViewProps) {
 
       <Separator className="my-6" />
 
+      {/* Netting comparison */}
+      {netting.naiveCount > 0 && netting.savedTransfers > 0 && (
+        <Card className="mb-6 border-emerald-100 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950">
+          <CardContent className="flex items-center gap-3 p-3">
+            <TrendingDown className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <div className="text-sm">
+              <span className="font-medium text-emerald-700 dark:text-emerald-300">
+                Deute net optimitzat:
+              </span>{' '}
+              <span className="text-emerald-600 dark:text-emerald-400">
+                {netting.naiveCount} → {netting.minimizedCount} transferències
+              </span>
+              <span className="text-muted-foreground">
+                {' '}(−{netting.reductionPercent}%)
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Settlements */}
       <h3 className="font-semibold mb-3">Transferències suggerides</h3>
-      {settlements.length === 0 ? (
+      {netting.minimized.length === 0 ? (
         <p className="text-muted-foreground text-center py-4">
           Tot està equilibrat! 🎉
         </p>
       ) : (
         <div className="space-y-2">
-          {settlements.map((s, i) => (
+          {netting.minimized.map((s, i) => (
             <Card key={i} className="border-amber-100 dark:border-amber-900 bg-amber-50 dark:bg-amber-950">
               <CardContent className="flex items-center justify-between p-3">
                 <div className="flex items-center gap-1.5">
