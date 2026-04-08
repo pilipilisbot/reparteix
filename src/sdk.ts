@@ -4,6 +4,7 @@ import {
   calculateBalances,
   calculateSettlements,
   computeSyncMerge,
+  getMemberColor,
   type Balance,
   type Settlement,
   type SyncReport,
@@ -13,10 +14,6 @@ import { db } from './infra/db'
 export type { Group, Expense, Payment, Member, Balance, Settlement, GroupExport, ReparteixExportV1, SyncEnvelopeV1, SyncReport }
 export { calculateBalances, calculateSettlements }
 
-const COLORS = [
-  '#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6',
-  '#8b5cf6', '#ef4444', '#14b8a6', '#f97316', '#06b6d4',
-]
 
 function generateId(): string {
   return crypto.randomUUID()
@@ -147,7 +144,7 @@ export const reparteix = {
     const member: Member = {
       id: generateId(),
       name,
-      color: COLORS[group.members.length % COLORS.length],
+      color: getMemberColor(group.members.length),
       createdAt: timestamp,
       updatedAt: timestamp,
       deleted: false,
