@@ -264,7 +264,7 @@ export function GroupList() {
                 >
                   <Archive className="h-4 w-4" />
                   Grups arxivats
-                  <Badge variant="outline" className="text-xs px-1.5 py-0 normal-case font-normal">
+                  <Badge variant="secondary" className="text-xs px-1.5 py-0 normal-case font-normal">
                     {archivedGroups.length}
                   </Badge>
                   <ChevronDown
