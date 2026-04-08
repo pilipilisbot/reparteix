@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   calculateBalances,
   calculateSettlements,
+  computeExpenseShares,
 } from './balances'
 import type { Expense, Payment } from '../entities'
 
@@ -205,6 +206,156 @@ describe('calculateBalances', () => {
     expect(balances.find((b) => b.memberId === 'a')?.total).toBe(20)
     expect(balances.find((b) => b.memberId === 'b')?.total).toBe(-10)
     expect(balances.find((b) => b.memberId === 'c')?.total).toBe(-10)
+  })
+
+  it('calculates correct balances for a percentage split (30/70)', () => {
+    // a pays €100, split by percentage: a=30%, b=70%
+    const expenses = [
+      makeExpense({
+        amount: 100,
+        payerId: 'a',
+        splitAmong: ['a', 'b'],
+        splitType: 'percentage',
+        splitPercentages: { a: 30, b: 70 },
+      }),
+    ]
+    const balances = calculateBalances(['a', 'b', 'c'], expenses, [])
+
+    // a paid 100, owes 30 → net +70
+    // b paid 0, owes 70 → net -70
+    // c not involved → 0
+    expect(balances.find((b) => b.memberId === 'a')?.total).toBe(70)
+    expect(balances.find((b) => b.memberId === 'b')?.total).toBe(-70)
+    expect(balances.find((b) => b.memberId === 'c')?.total).toBe(0)
+  })
+
+  it('calculates correct balances for a percentage split (equal 3-way)', () => {
+    const expenses = [
+      makeExpense({
+        amount: 60,
+        payerId: 'b',
+        splitAmong: ['a', 'b', 'c'],
+        splitType: 'percentage',
+        splitPercentages: { a: 33.33, b: 33.33, c: 33.34 },
+      }),
+    ]
+    const balances = calculateBalances(['a', 'b', 'c'], expenses, [])
+    const sum = balances.reduce((s, b) => s + b.total, 0)
+    expect(Math.abs(sum)).toBeLessThan(0.02)
+    expect(balances.find((b) => b.memberId === 'b')?.total).toBeGreaterThan(0)
+  })
+
+  it('falls back to equal split when splitType is percentage but splitPercentages is missing', () => {
+    const expenses = [
+      makeExpense({
+        amount: 30,
+        payerId: 'a',
+        splitAmong: ['a', 'b', 'c'],
+        splitType: 'percentage',
+        // splitPercentages intentionally omitted
+      }),
+    ]
+    const balances = calculateBalances(['a', 'b', 'c'], expenses, [])
+    expect(balances.find((b) => b.memberId === 'a')?.total).toBe(20)
+    expect(balances.find((b) => b.memberId === 'b')?.total).toBe(-10)
+    expect(balances.find((b) => b.memberId === 'c')?.total).toBe(-10)
+  })
+
+  it('calculates correct balances for a fixed-amount split', () => {
+    // a pays €30, fixed: a=€10, b=€20
+    const expenses = [
+      makeExpense({
+        amount: 30,
+        payerId: 'a',
+        splitAmong: ['a', 'b'],
+        splitType: 'fixed',
+        splitFixedAmounts: { a: 10, b: 20 },
+      }),
+    ]
+    const balances = calculateBalances(['a', 'b', 'c'], expenses, [])
+
+    // a paid 30, owes 10 → net +20
+    // b paid 0, owes 20 → net -20
+    // c not involved → 0
+    expect(balances.find((b) => b.memberId === 'a')?.total).toBe(20)
+    expect(balances.find((b) => b.memberId === 'b')?.total).toBe(-20)
+    expect(balances.find((b) => b.memberId === 'c')?.total).toBe(0)
+  })
+
+  it('falls back to equal split when splitType is fixed but splitFixedAmounts is missing', () => {
+    const expenses = [
+      makeExpense({
+        amount: 30,
+        payerId: 'a',
+        splitAmong: ['a', 'b', 'c'],
+        splitType: 'fixed',
+        // splitFixedAmounts intentionally omitted
+      }),
+    ]
+    const balances = calculateBalances(['a', 'b', 'c'], expenses, [])
+    expect(balances.find((b) => b.memberId === 'a')?.total).toBe(20)
+    expect(balances.find((b) => b.memberId === 'b')?.total).toBe(-10)
+    expect(balances.find((b) => b.memberId === 'c')?.total).toBe(-10)
+  })
+})
+
+describe('computeExpenseShares', () => {
+  it('returns equal shares by default', () => {
+    const expense = makeExpense({ amount: 30, payerId: 'a', splitAmong: ['a', 'b', 'c'] })
+    const shares = computeExpenseShares(expense)
+    expect(shares).toEqual({ a: 10, b: 10, c: 10 })
+  })
+
+  it('returns equal shares for splitType equal', () => {
+    const expense = makeExpense({
+      amount: 20,
+      payerId: 'a',
+      splitAmong: ['a', 'b'],
+      splitType: 'equal',
+    })
+    const shares = computeExpenseShares(expense)
+    expect(shares).toEqual({ a: 10, b: 10 })
+  })
+
+  it('returns weighted shares for proportional split', () => {
+    const expense = makeExpense({
+      amount: 40,
+      payerId: 'a',
+      splitAmong: ['a', 'b', 'c'],
+      splitType: 'proportional',
+      splitProportions: { a: 2, b: 1, c: 1 },
+    })
+    const shares = computeExpenseShares(expense)
+    expect(shares.a).toBe(20)
+    expect(shares.b).toBe(10)
+    expect(shares.c).toBe(10)
+  })
+
+  it('returns percentage-based shares', () => {
+    const expense = makeExpense({
+      amount: 200,
+      payerId: 'a',
+      splitAmong: ['a', 'b'],
+      splitType: 'percentage',
+      splitPercentages: { a: 25, b: 75 },
+    })
+    const shares = computeExpenseShares(expense)
+    expect(shares.a).toBe(50)
+    expect(shares.b).toBe(150)
+  })
+
+  it('returns fixed amounts for fixed split', () => {
+    const expense = makeExpense({
+      amount: 45,
+      payerId: 'b',
+      splitAmong: ['a', 'b', 'c'],
+      splitType: 'fixed',
+      splitFixedAmounts: { a: 15, b: 20, c: 10 },
+    })
+    const shares = computeExpenseShares(expense)
+    expect(shares.a).toBe(15)
+    expect(shares.b).toBe(20)
+    expect(shares.c).toBe(10)
   })
 })
 
