@@ -43,9 +43,8 @@ export function ExpenseList({ group }: ExpenseListProps) {
   const [amount, setAmount] = useState('')
   const [payerId, setPayerId] = useState('')
   const [splitAmong, setSplitAmong] = useState<string[]>([])
-  const [splitType, setSplitType] = useState<'equal' | 'proportional' | 'percentage' | 'fixed'>('equal')
+  const [splitType, setSplitType] = useState<'equal' | 'proportional' | 'fixed'>('equal')
   const [proportions, setProportions] = useState<Record<string, string>>({})
-  const [percentages, setPercentages] = useState<Record<string, string>>({})
   const [fixedAmounts, setFixedAmounts] = useState<Record<string, string>>({})
   const [showForm, setShowForm] = useState(false)
   const [receiptImage, setReceiptImage] = useState<string | null>(null)
@@ -71,12 +70,6 @@ export function ExpenseList({ group }: ExpenseListProps) {
       splitType === 'proportional'
         ? Object.fromEntries(
             splitAmong.map((id) => [id, parseFloat(proportions[id] ?? '1') || 1]),
-          )
-        : undefined,
-    splitPercentages:
-      splitType === 'percentage'
-        ? Object.fromEntries(
-            splitAmong.map((id) => [id, parseFloat(percentages[id] ?? '0') || 0]),
           )
         : undefined,
     splitFixedAmounts:
@@ -123,7 +116,6 @@ export function ExpenseList({ group }: ExpenseListProps) {
     setSplitAmong([])
     setSplitType('equal')
     setProportions({})
-    setPercentages({})
     setFixedAmounts({})
     setReceiptImage(null)
     setReceiptError(null)
@@ -181,17 +173,9 @@ export function ExpenseList({ group }: ExpenseListProps) {
   const getMemberColor = (id: string) =>
     group.members.find((m) => m.id === id)?.color ?? '#6366f1'
 
-  // Real-time validation for percentage and fixed split types
+  // Real-time validation for fixed split type
   let validationError: string | null = null
-  if (splitType === 'percentage' && splitAmong.length > 0) {
-    const sum = splitAmong.reduce(
-      (s, id) => s + (parseFloat(percentages[id] ?? '0') || 0),
-      0,
-    )
-    if (Math.abs(sum - 100) > 0.01) {
-      validationError = `Els percentatges sumen ${sum.toFixed(1)}%, han de sumar 100%.`
-    }
-  } else if (splitType === 'fixed' && splitAmong.length > 0 && amount) {
+  if (splitType === 'fixed' && splitAmong.length > 0 && amount) {
     const total = parseFloat(amount) || 0
     const sum = splitAmong.reduce(
       (s, id) => s + (parseFloat(fixedAmounts[id] ?? '0') || 0),
@@ -230,20 +214,13 @@ export function ExpenseList({ group }: ExpenseListProps) {
         0,
       )
       return (
-        'Proporcions: ' +
+        'Proporcional: ' +
         expense.splitAmong
           .map((id) => {
             const w = expense.splitProportions![id] ?? 1
-            return `${getMemberName(id)} (${w}/${total})`
+            const pct = total > 0 ? ((w / total) * 100).toFixed(0) : '0'
+            return `${getMemberName(id)} (${pct}%)`
           })
-          .join(', ')
-      )
-    }
-    if (expense.splitType === 'percentage' && expense.splitPercentages) {
-      return (
-        'Percentatges: ' +
-        expense.splitAmong
-          .map((id) => `${getMemberName(id)} (${expense.splitPercentages![id] ?? 0}%)`)
           .join(', ')
       )
     }
@@ -390,14 +367,6 @@ export function ExpenseList({ group }: ExpenseListProps) {
                       <Button
                         type="button"
                         size="sm"
-                        variant={splitType === 'percentage' ? 'default' : 'outline'}
-                        onClick={() => setSplitType('percentage')}
-                      >
-                        Percentatges
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
                         variant={splitType === 'fixed' ? 'default' : 'outline'}
                         onClick={() => setSplitType('fixed')}
                       >
@@ -405,69 +374,44 @@ export function ExpenseList({ group }: ExpenseListProps) {
                       </Button>
                     </div>
                   </div>
-                  {splitType === 'proportional' && splitAmong.length > 0 && (
-                    <div className="space-y-2">
-                      <Label className="text-sm text-muted-foreground">
-                        Proporcions (parts relatives)
-                      </Label>
-                      {splitAmong.map((id) => (
-                        <div key={id} className="flex items-center gap-2">
-                          <span className="text-sm w-24 truncate">{getMemberName(id)}</span>
-                          <Input
-                            type="number"
-                            min="0.01"
-                            step="0.01"
-                            value={proportions[id] ?? '1'}
-                            onChange={(e) =>
-                              setProportions((prev) => ({
-                                ...prev,
-                                [id]: e.target.value,
-                              }))
-                            }
-                            className="w-24"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {splitType === 'percentage' && splitAmong.length > 0 && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
+                  {splitType === 'proportional' && splitAmong.length > 0 && (() => {
+                    const totalWeight = splitAmong.reduce(
+                      (s, id) => s + (parseFloat(proportions[id] ?? '1') || 1),
+                      0,
+                    )
+                    return (
+                      <div className="space-y-2">
                         <Label className="text-sm text-muted-foreground">
-                          Percentatges (han de sumar 100%)
+                          Proporcions (parts relatives)
                         </Label>
-                        <span className={cn(
-                          'text-xs font-medium',
-                          Math.abs(splitAmong.reduce((s, id) => s + (parseFloat(percentages[id] ?? '0') || 0), 0) - 100) <= 0.01
-                            ? 'text-success'
-                            : 'text-destructive',
-                        )}>
-                          {splitAmong.reduce((s, id) => s + (parseFloat(percentages[id] ?? '0') || 0), 0).toFixed(1)}%
-                        </span>
+                        {splitAmong.map((id) => {
+                          const w = parseFloat(proportions[id] ?? '1') || 1
+                          const pct = totalWeight > 0 ? ((w / totalWeight) * 100).toFixed(1) : '0.0'
+                          return (
+                            <div key={id} className="flex items-center gap-2">
+                              <span className="text-sm w-24 truncate">{getMemberName(id)}</span>
+                              <Input
+                                type="number"
+                                min="0.01"
+                                step="0.01"
+                                value={proportions[id] ?? '1'}
+                                onChange={(e) =>
+                                  setProportions((prev) => ({
+                                    ...prev,
+                                    [id]: e.target.value,
+                                  }))
+                                }
+                                className="w-24"
+                              />
+                              <span className="text-xs text-muted-foreground w-12 text-right tabular-nums">
+                                {pct}%
+                              </span>
+                            </div>
+                          )
+                        })}
                       </div>
-                      {splitAmong.map((id) => (
-                        <div key={id} className="flex items-center gap-2">
-                          <span className="text-sm w-24 truncate">{getMemberName(id)}</span>
-                          <Input
-                            type="number"
-                            min="0"
-                            max="100"
-                            step="0.01"
-                            value={percentages[id] ?? ''}
-                            placeholder="0"
-                            onChange={(e) =>
-                              setPercentages((prev) => ({
-                                ...prev,
-                                [id]: e.target.value,
-                              }))
-                            }
-                            className="w-24"
-                          />
-                          <span className="text-sm text-muted-foreground">%</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                    )
+                  })()}
                   {splitType === 'fixed' && splitAmong.length > 0 && (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
@@ -607,7 +551,6 @@ export function ExpenseList({ group }: ExpenseListProps) {
                         setShowForm(false)
                         setReceiptImage(null)
                         setReceiptError(null)
-                        setPercentages({})
                         setFixedAmounts({})
                       }}
                     >

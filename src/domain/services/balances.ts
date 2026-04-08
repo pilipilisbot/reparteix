@@ -16,7 +16,7 @@ export interface Settlement {
  * Returns a map of memberId → share amount.
  */
 export function computeExpenseShares(expense: Expense): Record<string, number> {
-  const { amount, splitAmong, splitType, splitProportions, splitPercentages, splitFixedAmounts } =
+  const { amount, splitAmong, splitType, splitProportions, splitFixedAmounts } =
     expense
 
   if (splitType === 'proportional' && splitProportions) {
@@ -29,15 +29,6 @@ export function computeExpenseShares(expense: Expense): Record<string, number> {
         const weight = splitProportions[id] ?? 1
         const share = totalWeight > 0 ? amount * (weight / totalWeight) : 0
         return [id, share]
-      }),
-    )
-  }
-
-  if (splitType === 'percentage' && splitPercentages) {
-    return Object.fromEntries(
-      splitAmong.map((id) => {
-        const pct = splitPercentages[id] ?? 0
-        return [id, amount * (pct / 100)]
       }),
     )
   }
