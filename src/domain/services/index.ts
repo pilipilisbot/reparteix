@@ -19,3 +19,5 @@ export {
   type ExpenseMergeItem,
   type PaymentMergeItem,
 } from './sync'
+
+export { getMemberColor } from './colors'

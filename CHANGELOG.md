@@ -1,3 +1,10 @@
+# [1.22.0](https://github.com/reparteix/reparteix/compare/v1.21.0...v1.22.0) (2026-04-08)
+
+
+### Features
+
+* handle member colors beyond first 10 users using golden-angle HSL generation ([5c4abfb](https://github.com/reparteix/reparteix/commit/5c4abfbdf38371bc24364faa1245265ae7896d57))
+
 # [1.21.0](https://github.com/reparteix/reparteix/compare/v1.20.0...v1.21.0) (2026-04-08)
 
 
