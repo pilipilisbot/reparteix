@@ -65,33 +65,35 @@ export function ExpenseList({ group }: ExpenseListProps) {
   const activeMembers = group.members.filter((m) => !m.deleted)
   const symbol = CURRENCY_SYMBOLS[group.currency] ?? group.currency
 
+  const buildCurrentSplitFields = () => ({
+    splitType,
+    splitProportions:
+      splitType === 'proportional'
+        ? Object.fromEntries(
+            splitAmong.map((id) => [id, parseFloat(proportions[id] ?? '1') || 1]),
+          )
+        : undefined,
+    splitPercentages:
+      splitType === 'percentage'
+        ? Object.fromEntries(
+            splitAmong.map((id) => [id, parseFloat(percentages[id] ?? '0') || 0]),
+          )
+        : undefined,
+    splitFixedAmounts:
+      splitType === 'fixed'
+        ? Object.fromEntries(
+            splitAmong.map((id) => [id, parseFloat(fixedAmounts[id] ?? '0') || 0]),
+          )
+        : undefined,
+  })
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!description.trim() || !amount || !payerId || splitAmong.length === 0) return
     if (validationError) return
 
     const numAmount = parseFloat(amount)
-
-    const splitProportions =
-      splitType === 'proportional'
-        ? Object.fromEntries(
-            splitAmong.map((id) => [id, parseFloat(proportions[id] ?? '1') || 1]),
-          )
-        : undefined
-
-    const splitPercentages =
-      splitType === 'percentage'
-        ? Object.fromEntries(
-            splitAmong.map((id) => [id, parseFloat(percentages[id] ?? '0') || 0]),
-          )
-        : undefined
-
-    const splitFixedAmounts =
-      splitType === 'fixed'
-        ? Object.fromEntries(
-            splitAmong.map((id) => [id, parseFloat(fixedAmounts[id] ?? '0') || 0]),
-          )
-        : undefined
+    const splitFields = buildCurrentSplitFields()
 
     const expenseData = {
       groupId: group.id,
@@ -99,10 +101,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
       amount: numAmount,
       payerId,
       splitAmong,
-      splitType,
-      splitProportions,
-      splitPercentages,
-      splitFixedAmounts,
+      ...splitFields,
       date: new Date().toISOString().split('T')[0],
       receiptImage: receiptImage ?? undefined,
     }
@@ -216,25 +215,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
           amount: numAmountPreview,
           payerId: payerId || '',
           splitAmong,
-          splitType,
-          splitProportions:
-            splitType === 'proportional'
-              ? Object.fromEntries(
-                  splitAmong.map((id) => [id, parseFloat(proportions[id] ?? '1') || 1]),
-                )
-              : undefined,
-          splitPercentages:
-            splitType === 'percentage'
-              ? Object.fromEntries(
-                  splitAmong.map((id) => [id, parseFloat(percentages[id] ?? '0') || 0]),
-                )
-              : undefined,
-          splitFixedAmounts:
-            splitType === 'fixed'
-              ? Object.fromEntries(
-                  splitAmong.map((id) => [id, parseFloat(fixedAmounts[id] ?? '0') || 0]),
-                )
-              : undefined,
+          ...buildCurrentSplitFields(),
           date: '',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
