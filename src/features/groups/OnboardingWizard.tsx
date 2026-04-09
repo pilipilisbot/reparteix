@@ -27,6 +27,7 @@ interface DraftState {
 }
 
 const STORAGE_KEY = 'reparteix:onboarding-draft:v1'
+export const ONBOARDING_COMPLETED_KEY = 'reparteix:onboarding-completed:v1'
 
 const DEFAULT_DRAFT: DraftState = {
   step: 1,
@@ -172,6 +173,7 @@ export function OnboardingWizard() {
         date: new Date().toISOString().split('T')[0],
       })
       localStorage.removeItem(STORAGE_KEY)
+      localStorage.setItem(ONBOARDING_COMPLETED_KEY, 'true')
       navigate(`/group/${draft.groupId}`)
     } finally {
       setIsSubmitting(false)
