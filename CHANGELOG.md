@@ -1,3 +1,10 @@
+# [1.26.0](https://github.com/reparteix/reparteix/compare/v1.25.0...v1.26.0) (2026-04-09)
+
+
+### Features
+
+* allow editing expenses and payments ([#96](https://github.com/reparteix/reparteix/issues/96)) ([2a64392](https://github.com/reparteix/reparteix/commit/2a64392f8f379e743ae86dc120691f8eec81d3de))
+
 # [1.25.0](https://github.com/reparteix/reparteix/compare/v1.24.0...v1.25.0) (2026-04-09)
 
 
