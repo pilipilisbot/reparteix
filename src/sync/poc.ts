@@ -38,12 +38,11 @@ export async function generateGroupKey(): Promise<Uint8Array<ArrayBuffer>> {
   return normalizeBytes(crypto.getRandomValues(new Uint8Array(32)))
 }
 
-export function createGroupDoc(initialTitle = 'Nou grup'): Y.Doc {
+export function createGroupDoc(initialTitle?: string): Y.Doc {
   const doc = new Y.Doc()
   const meta = doc.getMap<string>('meta')
-  const expenses = doc.getArray<{ id: string; description: string; amount: number }>('expenses')
-  meta.set('title', initialTitle)
-  if (expenses.length === 0) expenses.insert(0, [])
+  doc.getArray<{ id: string; description: string; amount: number }>('expenses')
+  if (initialTitle) meta.set('title', initialTitle)
   return doc
 }
 
