@@ -4,6 +4,7 @@ import { GroupList } from './features/groups/GroupList'
 import { GroupDetail } from './features/groups/GroupDetail'
 import { GroupSettings } from './features/groups/GroupSettings'
 import { ImportFromUrl } from './features/groups/ImportFromUrl'
+import { OnboardingWizard } from './features/groups/OnboardingWizard'
 import { PWAUpdatePrompt } from './components/PWAUpdatePrompt'
 import { PWAInstallPrompt } from './components/PWAInstallPrompt'
 import { Footer } from './components/Footer'
@@ -44,6 +45,7 @@ function App() {
       <div className="flex min-h-screen flex-col">
         <Routes>
           <Route path="/" element={<GroupList />} />
+          <Route path="/onboarding" element={<OnboardingWizard />} />
           <Route path="/group/:groupId" element={<GroupDetail />} />
           <Route path="/group/:groupId/settings" element={<GroupSettings />} />
           <Route path="/import" element={<ImportFromUrl />} />

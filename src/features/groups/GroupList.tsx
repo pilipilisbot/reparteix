@@ -212,13 +212,21 @@ export function GroupList() {
                     </Button>
                   </form>
                 ) : (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Button
                       onClick={() => setShowForm(true)}
                       className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white"
                     >
                       <Plus className="h-4 w-4 mr-1" />
                       Nou grup
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => navigate('/onboarding')}
+                      className="gap-1.5"
+                    >
+                      Crear en 1 minut
                     </Button>
                     <Button
                       variant="outline"
