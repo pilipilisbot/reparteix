@@ -1,3 +1,10 @@
+## [1.28.1](https://github.com/reparteix/reparteix/compare/v1.28.0...v1.28.1) (2026-04-10)
+
+
+### Reverts
+
+* Revert "feat: Liquidació 1-click per període ([#102](https://github.com/reparteix/reparteix/issues/102))" ([866c15a](https://github.com/reparteix/reparteix/commit/866c15abf01d7194234dae15f8ef8133dbce7805))
+
 # [1.28.0](https://github.com/reparteix/reparteix/compare/v1.27.0...v1.28.0) (2026-04-10)
 
 
