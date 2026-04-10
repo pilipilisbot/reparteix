@@ -28,11 +28,24 @@ function randomId(prefix: string) {
   return `${prefix}-${Math.random().toString(36).slice(2, 8)}`
 }
 
+function detectDeviceName() {
+  if (typeof navigator === 'undefined') return 'Aquest dispositiu'
+  const ua = navigator.userAgent.toLowerCase()
+  if (ua.includes('iphone')) return 'iPhone'
+  if (ua.includes('ipad')) return 'iPad'
+  if (ua.includes('android')) return 'Android'
+  if (ua.includes('mac os')) return 'Mac'
+  if (ua.includes('windows')) return 'Windows'
+  if (ua.includes('linux')) return 'Linux'
+  return 'Aquest dispositiu'
+}
+
 export function SyncPocPanel({ group }: SyncPocPanelProps) {
   const { expenses } = useStore()
-  const [deviceName, setDeviceName] = useState('Aquest dispositiu')
+  const [deviceName] = useState(detectDeviceName)
   const [peerId] = useState(() => randomId('device'))
   const [invitePayload, setInvitePayload] = useState('')
+  const [inviteUrl, setInviteUrl] = useState('')
   const [joinPayload, setJoinPayload] = useState('')
   const [mode, setMode] = useState<SyncMode>('idle')
   const [status, setStatus] = useState('Encara no hi ha sincronització activa.')
@@ -115,16 +128,19 @@ export function SyncPocPanel({ group }: SyncPocPanelProps) {
     setHasSession(true)
 
     const payload = await createInvitePayload(groupKey, group.id)
-    setInvitePayload(JSON.stringify({ payload, peerId, deviceName }, null, 2))
+    const joinData = JSON.stringify({ payload, peerId, deviceName })
+    const url = `${window.location.origin}${window.location.pathname}#/import?sync=${encodeURIComponent(joinData)}`
+    setInvitePayload(joinData)
+    setInviteUrl(url)
     setMode('host-ready')
-    setStatus('Sincronització preparada. Comparteix l’enllaç o el codi amb un altre dispositiu teu.')
+    setStatus('Sincronització preparada. Comparteix l’enllaç amb un altre dispositiu.')
     pushDetail('S’ha creat una clau de grup per a aquesta sessió de sync.')
   }
 
-  const joinSync = async () => {
+  const joinSync = async (rawPayload?: string) => {
     teardown()
 
-    const parsed = JSON.parse(joinPayload) as { payload: string; peerId: string; deviceName?: string }
+    const parsed = JSON.parse(rawPayload ?? joinPayload) as { payload: string; peerId: string; deviceName?: string }
     const invite = await readInvitePayload(parsed.payload)
     const transport = createWebRtcSyncPeer({
       peerId,
@@ -149,6 +165,17 @@ export function SyncPocPanel({ group }: SyncPocPanelProps) {
     setStatus('Intentant enllaçar aquest dispositiu amb la sessió existent...')
     pushDetail(`S’està fent join al grup ${invite.groupId}.`)
   }
+
+  useEffect(() => {
+    const hash = window.location.hash
+    const queryIndex = hash.indexOf('?')
+    if (queryIndex === -1) return
+    const search = new URLSearchParams(hash.slice(queryIndex + 1))
+    const sync = search.get('sync')
+    if (!sync) return
+    setJoinPayload(sync)
+    void joinSync(sync)
+  }, [])
 
   const syncNow = async () => {
     if (!sessionRef.current) return
@@ -176,14 +203,9 @@ export function SyncPocPanel({ group }: SyncPocPanelProps) {
             Com funciona
           </p>
           <p>- actives sync en un dispositiu</p>
-          <p>- comparteixes un codi d’enllaç amb un altre dispositiu teu o d’un membre actiu</p>
+          <p>- comparteixes un enllaç amb un altre dispositiu o membre actiu</p>
+          <p>- l’altre dispositiu pot entrar encara que no tingui el grup carregat abans</p>
           <p>- mentre hi hagi algun peer connectat, els canvis es poden propagar en viu</p>
-          <p>- el contingut es continua enviant xifrat a nivell d’app</p>
-        </div>
-
-        <div className="space-y-1">
-          <Label htmlFor="sync-device-name">Nom del dispositiu</Label>
-          <Input id="sync-device-name" value={deviceName} onChange={(e) => setDeviceName(e.target.value)} placeholder="Ex. Mòbil Edu, Portàtil casa" />
         </div>
 
         <div className="rounded-md border p-3 space-y-2">
@@ -213,7 +235,7 @@ export function SyncPocPanel({ group }: SyncPocPanelProps) {
           </div>
           <div className="flex flex-wrap gap-2">
             <Button onClick={startSync}>Activar sync</Button>
-            <Button variant="secondary" onClick={joinSync} disabled={!joinPayload.trim()}>
+            <Button variant="secondary" onClick={() => joinSync()} disabled={!joinPayload.trim()}>
               Enllaçar dispositiu
             </Button>
             <Button variant="outline" onClick={syncNow} disabled={!hasSession}>
@@ -223,26 +245,31 @@ export function SyncPocPanel({ group }: SyncPocPanelProps) {
         </div>
 
         <div className="space-y-2">
-          <Label>Codi per enllaçar un altre dispositiu</Label>
+          <Label>Enllaç per a un altre dispositiu</Label>
           <div className="flex gap-2">
-            <Input value={invitePayload} readOnly placeholder="Activa sync per generar un codi d’enllaç" />
-            <Button variant="outline" size="icon" onClick={() => copyText(invitePayload)} disabled={!invitePayload}>
+            <Input value={inviteUrl} readOnly placeholder="Activa sync per generar un enllaç" />
+            <Button variant="outline" size="icon" onClick={() => copyText(inviteUrl)} disabled={!inviteUrl}>
               <Copy className="h-4 w-4" />
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Aquest codi encapsula la clau del grup per a la sessió actual. S’ha de compartir només amb un membre o dispositiu de confiança.
+            L’enllaç conté la informació d’unió per al primer accés. El receptor pot obrir-lo directament encara que el grup no existeixi localment.
           </p>
         </div>
 
         <div className="space-y-2">
-          <Label>Enllaçar aquest dispositiu amb un codi existent</Label>
+          <Label>Codi manual d’enllaç</Label>
           <div className="flex gap-2">
-            <Input value={joinPayload} onChange={(e) => setJoinPayload(e.target.value)} placeholder='Enganxa aquí el codi generat des d’un altre dispositiu' />
-            <Button variant="outline" size="icon" onClick={() => copyText(joinPayload)} disabled={!joinPayload}>
+            <Input value={invitePayload} readOnly placeholder="Activa sync per generar un codi manual" />
+            <Button variant="outline" size="icon" onClick={() => copyText(invitePayload)} disabled={!invitePayload}>
               <Link2 className="h-4 w-4" />
             </Button>
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Enganxar codi si no fas servir enllaç</Label>
+          <Input value={joinPayload} onChange={(e) => setJoinPayload(e.target.value)} placeholder='Enganxa aquí el codi generat des d’un altre dispositiu' />
         </div>
 
         <div className="rounded-md border p-3 space-y-2">
