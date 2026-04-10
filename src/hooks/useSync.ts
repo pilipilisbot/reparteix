@@ -14,8 +14,10 @@ export interface UseSyncReturn {
   state: SyncSessionState
   /** Local peer ID (available after connecting to signaling server) */
   peerId: string | null
-  /** Remote peer ID (available after peer connects) */
+  /** Last remote peer ID seen by the session */
   remotePeerId: string | null
+  /** All remote peers currently known by the session */
+  remotePeerIds: string[]
   /** Human-readable status message */
   message: string
   /** Error message if state is 'error' */
@@ -35,6 +37,7 @@ export function useSync({ groupId, passphrase, configOverrides }: UseSyncOptions
     state: 'idle',
     peerId: null,
     remotePeerId: null,
+    remotePeerIds: [],
     groupId,
     passphrase,
     error: null,
@@ -78,6 +81,7 @@ export function useSync({ groupId, passphrase, configOverrides }: UseSyncOptions
       state: 'idle',
       peerId: null,
       remotePeerId: null,
+      remotePeerIds: [],
       groupId,
       passphrase,
       error: null,
@@ -90,6 +94,7 @@ export function useSync({ groupId, passphrase, configOverrides }: UseSyncOptions
     state: status.state,
     peerId: status.peerId,
     remotePeerId: status.remotePeerId,
+    remotePeerIds: status.remotePeerIds,
     message: status.message,
     error: status.error,
     report: status.report,

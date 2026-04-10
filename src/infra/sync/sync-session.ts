@@ -43,6 +43,7 @@ export interface SyncSessionStatus {
   state: SyncSessionState
   peerId: string | null
   remotePeerId: string | null
+  remotePeerIds: string[]
   groupId: string
   passphrase: string
   error: string | null
@@ -66,6 +67,7 @@ export function createSyncSession(
     state: 'idle',
     peerId: null,
     remotePeerId: null,
+    remotePeerIds: [],
     groupId,
     passphrase,
     error: null,
@@ -78,6 +80,21 @@ export function createSyncSession(
     for (const listener of listeners) {
       listener(status)
     }
+  }
+
+  function addRemotePeer(remotePeerId: string) {
+    const remotePeerIds = status.remotePeerIds.includes(remotePeerId)
+      ? status.remotePeerIds
+      : [...status.remotePeerIds, remotePeerId]
+    update({ remotePeerId, remotePeerIds })
+  }
+
+  function removeRemotePeer(remotePeerId: string) {
+    const remotePeerIds = status.remotePeerIds.filter((id) => id !== remotePeerId)
+    update({
+      remotePeerIds,
+      remotePeerId: remotePeerIds.at(-1) ?? null,
+    })
   }
 
   // Build a group-specific peer ID prefix for discovery using SHA-256
@@ -162,8 +179,8 @@ export function createSyncSession(
       return
     }
 
+    addRemotePeer(remotePeerId)
     update({
-      remotePeerId,
       state: 'syncing',
       message: 'Connectat. Sincronitzant dades…',
     })
@@ -267,8 +284,8 @@ export function createSyncSession(
   }
 
   function handlePeerConnected(conn: PeerConnection) {
+    addRemotePeer(conn.peerId)
     update({
-      remotePeerId: conn.peerId,
       state: 'syncing',
       message: 'Peer connectat. Intercanviant dades…',
     })
@@ -277,10 +294,10 @@ export function createSyncSession(
     conn.send(createHelloMessage(peerManager.peerId!, [groupId]))
   }
 
-  function handlePeerDisconnected() {
+  function handlePeerDisconnected(remotePeerId: string) {
+    removeRemotePeer(remotePeerId)
     if (status.state !== 'completed' && status.state !== 'error') {
       update({
-        remotePeerId: null,
         state: 'error',
         error: 'Peer desconnectat',
         message: 'El peer s\'ha desconnectat abans de completar la sincronització.',

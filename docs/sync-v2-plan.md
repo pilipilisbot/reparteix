@@ -99,7 +99,7 @@ Goal: make the system operationally useful in real life.
 
 ### Runtime / coordinator
 
-- [ ] `SyncSessionStatus` supports many peers
+- [x] `SyncSessionStatus` supports many peers
 - [ ] sync coordinator distinguishes discovery, sync round, retry backoff and idle states
 - [ ] periodic retry loop with visibility-aware throttling
 - [ ] sync journal persisted per group
