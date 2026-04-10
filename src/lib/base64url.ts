@@ -21,8 +21,9 @@ export function encodeBase64Url(str: string): string {
  * Handles the URL-safe variant (- instead of +, _ instead of /).
  */
 export function decodeBase64Url(encoded: string): string {
-  const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/')
-  const binary = atob(base64)
+  const normalized = encoded.replace(/-/g, '+').replace(/_/g, '/')
+  const padding = normalized.length % 4 === 0 ? '' : '='.repeat(4 - (normalized.length % 4))
+  const binary = atob(normalized + padding)
   const bytes = new Uint8Array(binary.length)
   for (let i = 0; i < binary.length; i++) {
     bytes[i] = binary.charCodeAt(i)
