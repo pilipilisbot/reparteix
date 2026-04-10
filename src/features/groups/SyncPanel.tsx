@@ -10,6 +10,7 @@ import {
   Check,
   Eye,
   EyeOff,
+  Link2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,6 +28,26 @@ import type { SyncReport } from '@/domain/services/sync'
 
 interface SyncPanelProps {
   groupId: string
+}
+
+/**
+ * Encode a string to base64url (URL-safe base64 without padding).
+ */
+function encodeBase64Url(str: string): string {
+  const utf8 = new TextEncoder().encode(str)
+  let binary = ''
+  for (const byte of utf8) {
+    binary += String.fromCharCode(byte)
+  }
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+/**
+ * Build a shareable sync URL that the receiver can open to auto-join the P2P session.
+ */
+function buildSyncUrl(groupId: string, passphrase: string): string {
+  const k = encodeBase64Url(passphrase)
+  return `${window.location.origin}${window.location.pathname}#/sync?g=${encodeURIComponent(groupId)}&k=${k}`
 }
 
 function SyncReportDetails({ report }: { report: SyncReport }) {
@@ -142,6 +163,7 @@ export function SyncPanel({ groupId }: SyncPanelProps) {
   const [showPassphrase, setShowPassphrase] = useState(false)
   const [mode, setMode] = useState<'choose' | 'host' | 'join'>('choose')
   const [copied, setCopied] = useState(false)
+  const [copiedLink, setCopiedLink] = useState(false)
   const { loadGroups, loadGroupData } = useStore()
 
   const sync = useSync({
@@ -185,6 +207,13 @@ export function SyncPanel({ groupId }: SyncPanelProps) {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     }
+  }
+
+  const handleCopySyncLink = async () => {
+    const url = buildSyncUrl(groupId, passphrase)
+    await navigator.clipboard.writeText(url)
+    setCopiedLink(true)
+    setTimeout(() => setCopiedLink(false), 3000)
   }
 
   return (
@@ -279,16 +308,26 @@ export function SyncPanel({ groupId }: SyncPanelProps) {
             {/* Status message */}
             <p className="text-sm">{sync.message}</p>
 
-            {/* Instructions for host */}
+            {/* Instructions for host + share link */}
             {mode === 'host' && sync.state === 'waiting-for-peer' && (
-              <div className="rounded-md bg-muted p-3 text-sm space-y-2">
+              <div className="rounded-md bg-muted p-3 text-sm space-y-3">
                 <p className="font-medium">Per sincronitzar:</p>
                 <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-                  <li>Obre Reparteix a l'altre dispositiu</li>
-                  <li>Ves a la configuració del mateix grup</li>
-                  <li>Escriu la mateixa contrasenya</li>
-                  <li>Prem «Rebre»</li>
+                  <li>Comparteix l'enllaç amb l'altre dispositiu</li>
+                  <li>L'altre dispositiu obrirà l'enllaç i es connectarà automàticament</li>
                 </ol>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopySyncLink}
+                  className="w-full"
+                >
+                  {copiedLink ? <Check className="h-4 w-4 mr-2" /> : <Link2 className="h-4 w-4 mr-2" />}
+                  {copiedLink ? 'Enllaç copiat!' : 'Copiar enllaç de sync'}
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  O bé, manualment: obre Reparteix a l'altre dispositiu, ves al Sync del mateix grup, escriu la mateixa contrasenya i prem «Rebre».
+                </p>
               </div>
             )}
 
