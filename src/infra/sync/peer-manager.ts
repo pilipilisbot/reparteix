@@ -98,6 +98,7 @@ export function createPeerManager(options: PeerManagerOptions) {
   let state: ConnectionState = 'disconnected'
   // Reject callback for the current connectTo() promise — allows Peer-level
   // errors (e.g. peer-unavailable) to propagate to the connection attempt.
+  // Note: only one connectTo() is active at a time per sync session design.
   let pendingConnectReject: ((err: Error) => void) | null = null
 
   function setState(newState: ConnectionState) {

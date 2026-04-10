@@ -98,7 +98,7 @@ export function createSyncSession(
 
   /** Translate common PeerJS errors to user-friendly Catalan messages. */
   function friendlyError(err: Error): string {
-    const msg = err.message ?? ''
+    const msg = err.message
     if (msg.includes('Could not connect to peer') || msg.includes('peer-unavailable')) {
       return 'L\'altre dispositiu no està disponible. Assegura\'t que té la sessió de sync oberta.'
     }
