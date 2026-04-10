@@ -50,7 +50,7 @@ export function useSync({ groupId, passphrase, configOverrides }: UseSyncOptions
       sessionRef.current?.destroy()
       sessionRef.current = null
     }
-  }, [groupId, passphrase])
+  }, [groupId, passphrase, configOverrides])
 
   const ensureSession = useCallback(() => {
     if (!sessionRef.current) {

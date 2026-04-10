@@ -80,16 +80,18 @@ export function createSyncSession(
     }
   }
 
-  // Build a group-specific peer ID prefix for discovery
-  function buildGroupPeerId(): string {
-    // Hash group ID + passphrase to create a deterministic but private room ID
+  // Build a group-specific peer ID prefix for discovery using SHA-256
+  async function buildGroupPeerId(): Promise<string> {
     const raw = `reparteix-${groupId}-${passphrase}`
-    let hash = 0
-    for (let i = 0; i < raw.length; i++) {
-      hash = ((hash << 5) - hash + raw.charCodeAt(i)) | 0
+    const encoded = new TextEncoder().encode(raw)
+    const hashBuffer = await globalThis.crypto.subtle.digest('SHA-256', encoded)
+    const hashArray = new Uint8Array(hashBuffer)
+    // Take first 8 bytes and convert to hex for a compact, collision-resistant room ID
+    let hex = ''
+    for (let i = 0; i < 8; i++) {
+      hex += hashArray[i].toString(16).padStart(2, '0')
     }
-    const roomHash = Math.abs(hash).toString(36)
-    return `reparteix-${roomHash}`
+    return `reparteix-${hex}`
   }
 
   const config = createSyncConfig(configOverrides)
@@ -325,7 +327,7 @@ export function createSyncSession(
       update({ state: 'initializing', message: 'Connectant al servidor de senyalització…' })
 
       try {
-        const roomPeerId = buildGroupPeerId()
+        const roomPeerId = await buildGroupPeerId()
         const peerId = await peerManager.init(roomPeerId)
         update({
           state: 'waiting-for-peer',
@@ -352,7 +354,7 @@ export function createSyncSession(
           message: 'Connectant amb el peer…',
         })
 
-        const roomPeerId = buildGroupPeerId()
+        const roomPeerId = await buildGroupPeerId()
         await peerManager.connectTo(roomPeerId)
         // The rest is handled by onPeerConnected → handlePeerConnected
       } catch (err) {

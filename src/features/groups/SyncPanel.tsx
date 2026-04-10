@@ -213,7 +213,7 @@ export function SyncPanel({ groupId }: SyncPanelProps) {
                 onChange={(e) => setPassphrase(e.target.value)}
                 placeholder="Mínim 4 caràcters"
                 disabled={isActive}
-                autoComplete="off"
+                autoComplete="new-password"
               />
               <button
                 type="button"
