@@ -28,7 +28,13 @@ export function GroupList() {
   const [importStatus, setImportStatus] = useState<'idle' | 'ok' | 'error'>('idle')
   const [importError, setImportError] = useState('')
   const [showArchived, setShowArchived] = useState(false)
-  const [onboardingCompleted, setOnboardingCompleted] = useState(false)
+  const [onboardingCompleted] = useState(() => {
+    try {
+      return localStorage.getItem(ONBOARDING_COMPLETED_KEY) === 'true'
+    } catch {
+      return false
+    }
+  })
   const fileInputRef = useRef<HTMLInputElement>(null)
   const createGroupInputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
@@ -42,14 +48,6 @@ export function GroupList() {
       createGroupInputRef.current?.focus()
     }
   }, [showForm])
-
-  useEffect(() => {
-    try {
-      setOnboardingCompleted(localStorage.getItem(ONBOARDING_COMPLETED_KEY) === 'true')
-    } catch {
-      setOnboardingCompleted(false)
-    }
-  }, [])
 
   const handleCancel = () => {
     setShowForm(false)
