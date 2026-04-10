@@ -24,6 +24,8 @@ export interface UseSyncReturn {
   error: string | null
   /** Sync report with details of what changed */
   report: SyncReport | null
+  /** Sync v2 primary entry point: create room or join existing one */
+  startSync: () => Promise<void>
   /** Start as host — create a room and wait for peer */
   startAsHost: () => Promise<void>
   /** Join an existing session as guest */
@@ -64,6 +66,11 @@ export function useSync({ groupId, passphrase, configOverrides }: UseSyncOptions
     return sessionRef.current
   }, [groupId, passphrase, configOverrides])
 
+  const startSync = useCallback(async () => {
+    const session = ensureSession()
+    await session.startSync()
+  }, [ensureSession])
+
   const startAsHost = useCallback(async () => {
     const session = ensureSession()
     await session.startAsHost()
@@ -98,6 +105,7 @@ export function useSync({ groupId, passphrase, configOverrides }: UseSyncOptions
     message: status.message,
     error: status.error,
     report: status.report,
+    startSync,
     startAsHost,
     joinSession,
     reset,

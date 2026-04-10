@@ -281,12 +281,20 @@ export function SyncPanel({ groupId }: SyncPanelProps) {
         {sync.state === 'idle' && (
           <div className="space-y-2">
             <Button
-              onClick={() => handleStart('host')}
+              onClick={async () => {
+                setMode('host')
+                try {
+                  await persistPassphrase(passphrase)
+                  await sync.startSync()
+                } catch {
+                  // Error is handled by the sync hook
+                }
+              }}
               disabled={!canStart}
               className="w-full"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
-              Sincronitzar
+              Sincronitzar ara
             </Button>
             <Button
               variant="outline"
@@ -295,7 +303,7 @@ export function SyncPanel({ groupId }: SyncPanelProps) {
               className="w-full"
             >
               <Wifi className="h-4 w-4 mr-2" />
-              Rebre des d'un enllaç o un altre dispositiu
+              Obrir en mode connexió manual
             </Button>
           </div>
         )}

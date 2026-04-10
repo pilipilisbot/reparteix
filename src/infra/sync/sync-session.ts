@@ -402,6 +402,45 @@ export function createSyncSession(
       }
     },
 
+    /**
+     * Sync v2 entry point: try to create the room first, otherwise join the existing one.
+     */
+    async startSync(): Promise<void> {
+      const roomPeerId = await buildGroupPeerId()
+      update({ state: 'initializing', message: 'Preparant sincronització…' })
+
+      try {
+        const peerId = await peerManager.init(roomPeerId)
+        update({
+          state: 'waiting-for-peer',
+          peerId,
+          message: 'Sessió creada. Esperant que es connecti un altre dispositiu…',
+        })
+        return
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Error inicialitzant'
+        if (!msg.includes('is taken') && !msg.includes('unavailable-id')) {
+          const friendly = err instanceof Error ? friendlyError(err) : 'Error inicialitzant'
+          update({ state: 'error', error: friendly, message: `Error: ${friendly}` })
+          throw err
+        }
+      }
+
+      try {
+        await peerManager.init()
+        update({
+          state: 'connecting',
+          peerId: peerManager.peerId,
+          message: 'Sessió existent detectada. Connectant per sincronitzar…',
+        })
+        await peerManager.connectTo(roomPeerId)
+      } catch (err) {
+        const msg = err instanceof Error ? friendlyError(err) : 'Error connectant'
+        update({ state: 'error', error: msg, message: `Error: ${msg}` })
+        throw err
+      }
+    },
+
     /** Clean up all resources. */
     destroy() {
       peerManager.destroy()
