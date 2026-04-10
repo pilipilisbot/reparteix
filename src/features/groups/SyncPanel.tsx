@@ -201,20 +201,6 @@ export function SyncPanel({ groupId }: SyncPanelProps) {
     }
   }
 
-  const handleStart = async (selectedMode: 'host' | 'join') => {
-    setMode(selectedMode)
-    try {
-      await persistPassphrase(passphrase)
-      if (selectedMode === 'host') {
-        await sync.startAsHost()
-      } else {
-        await sync.joinSession()
-      }
-    } catch {
-      // Error is handled by the sync hook
-    }
-  }
-
   const handleReset = () => {
     sync.reset()
     setMode('idle')
@@ -290,35 +276,23 @@ export function SyncPanel({ groupId }: SyncPanelProps) {
           </p>
         </div>
 
-        {/* Phase 1 V2 UX: one primary sync action, with optional explicit receive path kept as secondary */}
         {sync.state === 'idle' && (
-          <div className="space-y-2">
-            <Button
-              onClick={async () => {
-                setMode('host')
-                try {
-                  await persistPassphrase(passphrase)
-                  await sync.startSync()
-                } catch {
-                  // Error is handled by the sync hook
-                }
-              }}
-              disabled={!canStart}
-              className="w-full"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Sincronitzar ara
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => handleStart('join')}
-              disabled={!canStart}
-              className="w-full"
-            >
-              <Wifi className="h-4 w-4 mr-2" />
-              Obrir en mode connexió manual
-            </Button>
-          </div>
+          <Button
+            onClick={async () => {
+              setMode('host')
+              try {
+                await persistPassphrase(passphrase)
+                await sync.startSync()
+              } catch {
+                // Error is handled by the sync hook
+              }
+            }}
+            disabled={!canStart}
+            className="w-full"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Sincronitzar
+          </Button>
         )}
 
         {/* Active sync status */}
