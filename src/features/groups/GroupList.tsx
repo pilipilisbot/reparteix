@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../../store'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Trash2, Users, ChevronRight, Upload, Archive, ChevronDown } from 'lucide-react'
+import { ONBOARDING_COMPLETED_KEY } from './OnboardingWizard'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -27,6 +28,13 @@ export function GroupList() {
   const [importStatus, setImportStatus] = useState<'idle' | 'ok' | 'error'>('idle')
   const [importError, setImportError] = useState('')
   const [showArchived, setShowArchived] = useState(false)
+  const [onboardingCompleted] = useState(() => {
+    try {
+      return localStorage.getItem(ONBOARDING_COMPLETED_KEY) === 'true'
+    } catch {
+      return false
+    }
+  })
   const fileInputRef = useRef<HTMLInputElement>(null)
   const createGroupInputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
@@ -212,7 +220,7 @@ export function GroupList() {
                     </Button>
                   </form>
                 ) : (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Button
                       onClick={() => setShowForm(true)}
                       className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white"
@@ -220,6 +228,16 @@ export function GroupList() {
                       <Plus className="h-4 w-4 mr-1" />
                       Nou grup
                     </Button>
+                    {!onboardingCompleted && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => navigate('/onboarding')}
+                        className="gap-1.5"
+                      >
+                        Crear en 1 minut
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
