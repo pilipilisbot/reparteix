@@ -1,3 +1,10 @@
+# [1.27.0](https://github.com/reparteix/reparteix/compare/v1.26.0...v1.27.0) (2026-04-10)
+
+
+### Features
+
+* add guided onboarding wizard ([#98](https://github.com/reparteix/reparteix/issues/98)) ([928fb35](https://github.com/reparteix/reparteix/commit/928fb3568a779e571c07fbb3c9cd3152338090cd))
+
 # [1.26.0](https://github.com/reparteix/reparteix/compare/v1.25.0...v1.26.0) (2026-04-09)
 
 
