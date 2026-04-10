@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Group, Expense, Payment } from '../domain/entities'
+import type { Group, Expense, Payment, Liquidation } from '../domain/entities'
 import { reparteix } from '../sdk'
 
 interface AppState {
@@ -7,6 +7,7 @@ interface AppState {
   groupTotals: Record<string, number>
   expenses: Expense[]
   payments: Payment[]
+  liquidations: Liquidation[]
   currentGroupId: string | null
 
   // Actions
@@ -28,6 +29,8 @@ interface AppState {
   addPayment: (payment: Omit<Payment, 'id' | 'createdAt' | 'updatedAt' | 'deleted'>) => Promise<void>
   updatePayment: (payment: Payment) => Promise<void>
   deletePayment: (id: string) => Promise<void>
+  createLiquidation: (params: { groupId: string; name: string; periodStart?: string; periodEnd?: string }) => Promise<Liquidation>
+  deleteLiquidation: (id: string) => Promise<void>
   setCurrentGroup: (groupId: string | null) => void
   exportGroup: (groupId: string) => Promise<void>
   importGroup: (raw: unknown) => Promise<Group>
@@ -38,6 +41,7 @@ export const useStore = create<AppState>((set, get) => ({
   groupTotals: {},
   expenses: [],
   payments: [],
+  liquidations: [],
   currentGroupId: null,
 
   loadGroups: async () => {
@@ -49,11 +53,12 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   loadGroupData: async (groupId: string) => {
-    const [expenses, payments] = await Promise.all([
+    const [expenses, payments, liquidations] = await Promise.all([
       reparteix.listExpenses(groupId),
       reparteix.listPayments(groupId),
+      reparteix.listLiquidations(groupId),
     ])
-    set({ expenses, payments, currentGroupId: groupId })
+    set({ expenses, payments, liquidations, currentGroupId: groupId })
   },
 
   addGroup: async (name: string) => {
@@ -153,6 +158,20 @@ export const useStore = create<AppState>((set, get) => ({
     const payment = get().payments.find((p) => p.id === id)
     await reparteix.deletePayment(id)
     if (payment) await get().loadGroupData(payment.groupId)
+  },
+
+  createLiquidation: async (params) => {
+    const liq = await reparteix.createLiquidation(params)
+    await get().loadGroupData(params.groupId)
+    return liq
+  },
+
+  deleteLiquidation: async (id: string) => {
+    const liq = get().liquidations.find((l) => l.id === id)
+    if (liq) {
+      await reparteix.deleteLiquidation(id)
+      await get().loadGroupData(liq.groupId)
+    }
   },
 
   setCurrentGroup: (groupId) => {
