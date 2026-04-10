@@ -10,7 +10,6 @@ import { useStore } from '../../store'
 import { ExpenseList } from '../expenses/ExpenseList'
 import { BalanceView } from '../balances/BalanceView'
 import { SettlementList } from '../settlements/SettlementList'
-import { LiquidationList } from '../liquidations/LiquidationList'
 import { SyncPanel } from './SyncPanel'
 import {
   AlertDialog,
@@ -293,9 +292,6 @@ export function GroupDetail() {
           <TabsTrigger value="settlements" className="flex-1">
             Pagaments
           </TabsTrigger>
-          <TabsTrigger value="liquidations" className="flex-1">
-            Liquidacions
-          </TabsTrigger>
           <TabsTrigger value="sync" className="flex-1">
             <RefreshCw className="h-3.5 w-3.5 mr-1" />
             Sync
@@ -310,9 +306,6 @@ export function GroupDetail() {
         </TabsContent>
         <TabsContent value="settlements" className="flex-1 overflow-y-auto min-h-0 pb-4">
           <SettlementList group={group} />
-        </TabsContent>
-        <TabsContent value="liquidations" className="flex-1 overflow-y-auto min-h-0 pb-4">
-          <LiquidationList group={group} />
         </TabsContent>
         <TabsContent value="sync" className="flex-1 overflow-y-auto min-h-0 pb-4 pt-4">
           <SyncPanel groupId={group.id} />

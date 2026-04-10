@@ -1,4 +1,4 @@
-import type { Group, Expense, Payment, Member, GroupExport, ReparteixExportV1, SyncEnvelopeV1, Liquidation } from './domain/entities'
+import type { Group, Expense, Payment, Member, GroupExport, ReparteixExportV1, SyncEnvelopeV1 } from './domain/entities'
 import { GroupExportSchema, ReparteixExportV1Schema, SyncEnvelopeV1Schema } from './domain/entities'
 import {
   calculateBalances,
@@ -398,96 +398,27 @@ export const reparteix = {
   // ─── Balances & Settlements ────────────────────────────────────────
 
   /** Calculate net balances for all active members in a group. */
-  async getBalances(groupId: string, periodStart?: string, periodEnd?: string): Promise<Balance[]> {
+  async getBalances(groupId: string): Promise<Balance[]> {
     const group = await db.groups.get(groupId)
     if (!group) return []
 
     const memberIds = group.members.filter((m) => !m.deleted).map((m) => m.id)
-    let expenses = await reparteix.listExpenses(groupId)
-    let payments = await reparteix.listPayments(groupId)
-
-    if (periodStart) {
-      expenses = expenses.filter((e) => e.date >= periodStart)
-      payments = payments.filter((p) => p.date >= periodStart)
-    }
-    if (periodEnd) {
-      expenses = expenses.filter((e) => e.date <= periodEnd)
-      payments = payments.filter((p) => p.date <= periodEnd)
-    }
+    const expenses = await reparteix.listExpenses(groupId)
+    const payments = await reparteix.listPayments(groupId)
 
     return calculateBalances(memberIds, expenses, payments)
   },
 
   /** Calculate minimum settlements needed to clear all debts in a group. */
-  async getSettlements(groupId: string, periodStart?: string, periodEnd?: string): Promise<Settlement[]> {
-    const balances = await reparteix.getBalances(groupId, periodStart, periodEnd)
+  async getSettlements(groupId: string): Promise<Settlement[]> {
+    const balances = await reparteix.getBalances(groupId)
     return calculateSettlements(balances)
   },
 
   /** Calculate netting result: naive vs minimized settlements with comparison stats. */
-  async getNetting(groupId: string, periodStart?: string, periodEnd?: string): Promise<NettingResult> {
-    const balances = await reparteix.getBalances(groupId, periodStart, periodEnd)
+  async getNetting(groupId: string): Promise<NettingResult> {
+    const balances = await reparteix.getBalances(groupId)
     return calculateNetting(balances)
-  },
-
-  // ─── Liquidations ──────────────────────────────────────────────────
-
-  /** List all liquidations for a group. */
-  async listLiquidations(groupId: string): Promise<Liquidation[]> {
-    return db.liquidations.where('groupId').equals(groupId).sortBy('createdAt')
-  },
-
-  /** Create a new liquidation snapshot and generate optimal transfers. */
-  async createLiquidation(params: {
-    groupId: string
-    name: string
-    periodStart?: string
-    periodEnd?: string
-  }): Promise<Liquidation> {
-    const group = await db.groups.get(params.groupId)
-    if (!group) throw new Error('Group not found')
-    if (group.archived) throw new Error('Cannot modify an archived group')
-
-    let expenses = await reparteix.listExpenses(params.groupId)
-    if (params.periodStart) {
-      expenses = expenses.filter((e) => e.date >= params.periodStart!)
-    }
-    if (params.periodEnd) {
-      expenses = expenses.filter((e) => e.date <= params.periodEnd!)
-    }
-
-    const totalSpent = expenses.reduce((sum, e) => sum + e.amount, 0)
-    const netting = await reparteix.getNetting(params.groupId, params.periodStart, params.periodEnd)
-    const balances = await reparteix.getBalances(params.groupId, params.periodStart, params.periodEnd)
-
-    const liquidation: Liquidation = {
-      id: generateId(),
-      groupId: params.groupId,
-      name: params.name,
-      periodStart: params.periodStart,
-      periodEnd: params.periodEnd,
-      transfers: netting.minimized.map((s) => ({
-        fromId: s.fromId,
-        toId: s.toId,
-        amount: s.amount,
-      })),
-      balances: Object.fromEntries(balances.map((b) => [b.memberId, b.total])),
-      totalSpent,
-      createdAt: new Date().toISOString(),
-    }
-
-    await db.liquidations.add(liquidation)
-    return liquidation
-  },
-
-  /** Delete a liquidation snapshot. Throws if the group is archived. */
-  async deleteLiquidation(id: string): Promise<void> {
-    const liquidation = await db.liquidations.get(id)
-    if (liquidation) {
-      const group = await db.groups.get(liquidation.groupId)
-      if (group?.archived) throw new Error('Cannot modify an archived group')
-      await db.liquidations.delete(id)
-    }
   },
 
   // ─── Import / Export ───────────────────────────────────────────────
