@@ -158,7 +158,7 @@ export function SyncPanel({ groupId }: SyncPanelProps) {
 
   const [passphrase, setPassphrase] = useState(rememberedPassphrase)
   const [showPassphrase, setShowPassphrase] = useState(false)
-  const [mode, setMode] = useState<'choose' | 'host' | 'join'>('choose')
+  const [mode, setMode] = useState<'idle' | 'host' | 'join'>('idle')
   const [copied, setCopied] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
   const { loadGroups, loadGroupData } = useStore()
@@ -204,12 +204,12 @@ export function SyncPanel({ groupId }: SyncPanelProps) {
 
   const handleReset = () => {
     sync.reset()
-    setMode('choose')
+    setMode('idle')
   }
 
   const handleDone = async () => {
     sync.reset()
-    setMode('choose')
+    setMode('idle')
     setPassphrase('')
     // Reload data to reflect sync changes
     await loadGroups()
@@ -277,26 +277,25 @@ export function SyncPanel({ groupId }: SyncPanelProps) {
           </p>
         </div>
 
-        {/* Mode selection / active state */}
-        {mode === 'choose' && sync.state === 'idle' && (
-          <div className="grid grid-cols-2 gap-2">
+        {/* Phase 1 V2 UX: one primary sync action, with optional explicit receive path kept as secondary */}
+        {sync.state === 'idle' && (
+          <div className="space-y-2">
             <Button
-              variant="outline"
               onClick={() => handleStart('host')}
               disabled={!canStart}
-              className="flex-col h-auto py-3"
+              className="w-full"
             >
-              <Wifi className="h-5 w-5 mb-1" />
-              <span className="text-xs">Compartir</span>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Sincronitzar
             </Button>
             <Button
               variant="outline"
               onClick={() => handleStart('join')}
               disabled={!canStart}
-              className="flex-col h-auto py-3"
+              className="w-full"
             >
-              <RefreshCw className="h-5 w-5 mb-1" />
-              <span className="text-xs">Rebre</span>
+              <Wifi className="h-4 w-4 mr-2" />
+              Rebre des d'un enllaç o un altre dispositiu
             </Button>
           </div>
         )}
@@ -324,7 +323,14 @@ export function SyncPanel({ groupId }: SyncPanelProps) {
             </div>
 
             {/* Status message */}
-            <p className="text-sm">{sync.message}</p>
+            <div className="space-y-1">
+              <p className="text-sm">{sync.message}</p>
+              {sync.remotePeerIds.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Peers detectats: {sync.remotePeerIds.join(', ')}
+                </p>
+              )}
+            </div>
 
             {/* Instructions for host + share link */}
             {mode === 'host' && sync.state === 'waiting-for-peer' && (
