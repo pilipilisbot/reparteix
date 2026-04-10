@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Copy, Link2, Radio, Shield, Wifi } from 'lucide-react'
+import { CheckCircle2, Copy, Link2, Shield, Smartphone, Wifi, WifiOff } from 'lucide-react'
 import { useStore } from '../../store'
 import { createGroupDoc, createInvitePayload, generateGroupKey, readInvitePayload } from '../../sync/poc'
 import { createSyncSession } from '../../sync/session'
@@ -13,6 +13,8 @@ import type { Group } from '../../domain/entities'
 interface SyncPocPanelProps {
   group: Group
 }
+
+type SyncMode = 'idle' | 'host-ready' | 'joining' | 'connected'
 
 const DEFAULT_CONFIG: SyncRtcConfig = {
   host: '0.peerjs.com',
@@ -28,18 +30,20 @@ function randomId(prefix: string) {
 
 export function SyncPocPanel({ group }: SyncPocPanelProps) {
   const { expenses } = useStore()
-  const [peerId, setPeerId] = useState(() => randomId('host'))
-  const [remotePeerId, setRemotePeerId] = useState('')
+  const [deviceName, setDeviceName] = useState('Aquest dispositiu')
+  const [peerId] = useState(() => randomId('device'))
   const [invitePayload, setInvitePayload] = useState('')
   const [joinPayload, setJoinPayload] = useState('')
-  const [status, setStatus] = useState<string[]>([])
+  const [mode, setMode] = useState<SyncMode>('idle')
+  const [status, setStatus] = useState('Encara no hi ha sincronització activa.')
+  const [details, setDetails] = useState<string[]>([])
+  const [showAdvanced, setShowAdvanced] = useState(false)
   const [hostInput, setHostInput] = useState(DEFAULT_CONFIG.host ?? '')
   const [pathInput, setPathInput] = useState(DEFAULT_CONFIG.path ?? '/')
   const [stunInput, setStunInput] = useState('stun:stun.l.google.com:19302')
 
   const transportRef = useRef<WebRtcSyncTransportPeer | null>(null)
   const sessionRef = useRef<ReturnType<typeof createSyncSession> | null>(null)
-  const groupKeyRef = useRef<Uint8Array | null>(null)
 
   const activeExpenses = useMemo(
     () => expenses.filter((expense) => expense.groupId === group.id && !expense.deleted),
@@ -53,8 +57,8 @@ export function SyncPocPanel({ group }: SyncPocPanelProps) {
     }
   }, [])
 
-  const pushStatus = (message: string) => {
-    setStatus((current) => [message, ...current].slice(0, 8))
+  const pushDetail = (message: string) => {
+    setDetails((current) => [message, ...current].slice(0, 6))
   }
 
   const rtcConfig = (): SyncRtcConfig => ({
@@ -79,131 +83,158 @@ export function SyncPocPanel({ group }: SyncPocPanelProps) {
     return doc
   }
 
-  const startHosting = async () => {
+  const teardown = () => {
     sessionRef.current?.stop()
     transportRef.current?.destroy()
+    sessionRef.current = null
+    transportRef.current = null
+  }
 
+  const startSync = async () => {
+    teardown()
     const groupKey = await generateGroupKey()
-    groupKeyRef.current = groupKey
-
     const transport = createWebRtcSyncPeer({
       peerId,
       config: rtcConfig(),
-      onStatus: pushStatus,
+      onStatus: (message) => {
+        pushDetail(message)
+        if (message.includes('Connexió oberta')) {
+          setMode('connected')
+          setStatus('Hi ha almenys un altre dispositiu connectat. La sincronització en viu està disponible.')
+        }
+      },
     })
-    const doc = buildDocFromCurrentGroup()
-    const session = createSyncSession(doc, groupKey, transport)
+
+    const session = createSyncSession(buildDocFromCurrentGroup(), groupKey, transport)
     session.start()
 
     transportRef.current = transport
     sessionRef.current = session
 
     const payload = await createInvitePayload(groupKey, group.id)
-    setInvitePayload(JSON.stringify({ payload, peerId }, null, 2))
-    pushStatus('Host preparat. Comparteix l’invite amb un altre peer.')
+    setInvitePayload(JSON.stringify({ payload, peerId, deviceName }, null, 2))
+    setMode('host-ready')
+    setStatus('Sincronització preparada. Comparteix l’enllaç o el codi amb un altre dispositiu teu.')
+    pushDetail('S’ha creat una clau de grup per a aquesta sessió de sync.')
   }
 
-  const joinHost = async () => {
-    sessionRef.current?.stop()
-    transportRef.current?.destroy()
+  const joinSync = async () => {
+    teardown()
 
-    const parsed = JSON.parse(joinPayload) as { payload: string; peerId: string }
+    const parsed = JSON.parse(joinPayload) as { payload: string; peerId: string; deviceName?: string }
     const invite = await readInvitePayload(parsed.payload)
-    groupKeyRef.current = invite.groupKey
-    setRemotePeerId(parsed.peerId)
-
     const transport = createWebRtcSyncPeer({
       peerId,
       remotePeerId: parsed.peerId,
       config: rtcConfig(),
-      onStatus: pushStatus,
+      onStatus: (message) => {
+        pushDetail(message)
+        if (message.includes('Connexió oberta')) {
+          setMode('connected')
+          setStatus(`Connectat amb ${parsed.deviceName ?? 'un altre dispositiu'}. La sync queda viva mentre hi hagi algun peer actiu.`)
+        }
+      },
     })
+
     const session = createSyncSession(createGroupDoc(group.name), invite.groupKey, transport)
     session.start()
 
     transportRef.current = transport
     sessionRef.current = session
-    pushStatus(`Join preparat per al grup ${invite.groupId}. Esperant dades...`)
+    setMode('joining')
+    setStatus('Intentant enllaçar aquest dispositiu amb la sessió existent...')
+    pushDetail(`S’està fent join al grup ${invite.groupId}.`)
   }
 
   const syncNow = async () => {
-    if (!sessionRef.current) {
-      pushStatus('No hi ha sessió activa')
-      return
-    }
+    if (!sessionRef.current) return
     await sessionRef.current.pushState()
-    pushStatus('S’ha enviat un update xifrat al peer connectat')
+    pushDetail('S’ha enviat un update xifrat als peers connectats.')
   }
 
   const copyText = async (value: string) => {
     await navigator.clipboard.writeText(value)
-    pushStatus('Copiat al porta-retalls')
+    pushDetail('Copiat al porta-retalls.')
   }
 
   return (
-    <Card className="border-dashed border-indigo-300 dark:border-indigo-800">
+    <Card className="border-indigo-200 dark:border-indigo-900">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <Radio className="h-4 w-4" />
-          Sync PoC, WebRTC + PeerJS
+          <Smartphone className="h-4 w-4" />
+          Sincronització entre dispositius (PoC)
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
-        <div className="rounded-md border bg-muted/30 p-3 text-muted-foreground space-y-1">
-          <p className="font-medium text-foreground flex items-center gap-2"><Shield className="h-4 w-4" /> Model de seguretat</p>
-          <p>- cada grup genera una <strong>group key</strong> simètrica</p>
-          <p>- la clau viatja dins l’invite i s’ha de compartir entre membres actius</p>
-          <p>- els updates s’envien xifrats sobre WebRTC</p>
-          <p>- si no hi ha cap membre actiu connectat, no hi ha sync en viu</p>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-1">
-            <Label htmlFor="sync-peer-id">Peer ID local</Label>
-            <Input id="sync-peer-id" value={peerId} onChange={(e) => setPeerId(e.target.value)} />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="sync-remote-id">Peer remot</Label>
-            <Input id="sync-remote-id" value={remotePeerId} onChange={(e) => setRemotePeerId(e.target.value)} placeholder="S'omple fent join o manualment" />
-          </div>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-1">
-            <Label htmlFor="sync-host">PeerJS host</Label>
-            <Input id="sync-host" value={hostInput} onChange={(e) => setHostInput(e.target.value)} />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="sync-path">Path</Label>
-            <Input id="sync-path" value={pathInput} onChange={(e) => setPathInput(e.target.value)} />
-          </div>
+        <div className="rounded-md border bg-muted/30 p-3 space-y-2 text-muted-foreground">
+          <p className="font-medium text-foreground flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            Com funciona
+          </p>
+          <p>- actives sync en un dispositiu</p>
+          <p>- comparteixes un codi d’enllaç amb un altre dispositiu teu o d’un membre actiu</p>
+          <p>- mentre hi hagi algun peer connectat, els canvis es poden propagar en viu</p>
+          <p>- el contingut es continua enviant xifrat a nivell d’app</p>
         </div>
 
         <div className="space-y-1">
-          <Label htmlFor="sync-stun">STUN/TURN URLs (coma separada)</Label>
-          <Input id="sync-stun" value={stunInput} onChange={(e) => setStunInput(e.target.value)} />
+          <Label htmlFor="sync-device-name">Nom del dispositiu</Label>
+          <Input id="sync-device-name" value={deviceName} onChange={(e) => setDeviceName(e.target.value)} placeholder="Ex. Mòbil Edu, Portàtil casa" />
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={startHosting}>Host</Button>
-          <Button variant="secondary" onClick={joinHost}>Join</Button>
-          <Button variant="outline" onClick={syncNow}>Sincronitzar ara</Button>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Invite payload</Label>
-          <div className="flex gap-2">
-            <Input value={invitePayload} readOnly placeholder="Genera un host i comparteix aquest payload" />
-            <Button variant="outline" size="icon" onClick={() => copyText(invitePayload)} disabled={!invitePayload}>
-              <Copy className="h-4 w-4" />
+        <div className="rounded-md border p-3 space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="font-medium text-foreground">Estat</p>
+              <p className="text-muted-foreground">{status}</p>
+            </div>
+            <div className="shrink-0">
+              {mode === 'connected' ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                  <CheckCircle2 className="h-4 w-4" />
+                  Connectat
+                </span>
+              ) : mode === 'idle' ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-muted-foreground">
+                  <WifiOff className="h-4 w-4" />
+                  Inactiu
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-3 py-1 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                  <Wifi className="h-4 w-4" />
+                  Preparat
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={startSync}>Activar sync</Button>
+            <Button variant="secondary" onClick={joinSync} disabled={!joinPayload.trim()}>
+              Enllaçar dispositiu
+            </Button>
+            <Button variant="outline" onClick={syncNow} disabled={!sessionRef.current}>
+              Forçar sync ara
             </Button>
           </div>
         </div>
 
         <div className="space-y-2">
-          <Label>Join payload</Label>
+          <Label>Codi per enllaçar un altre dispositiu</Label>
           <div className="flex gap-2">
-            <Input value={joinPayload} onChange={(e) => setJoinPayload(e.target.value)} placeholder='{"payload":"...","peerId":"host-abc"}' />
+            <Input value={invitePayload} readOnly placeholder="Activa sync per generar un codi d’enllaç" />
+            <Button variant="outline" size="icon" onClick={() => copyText(invitePayload)} disabled={!invitePayload}>
+              <Copy className="h-4 w-4" />
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Aquest codi encapsula la clau del grup per a la sessió actual. S’ha de compartir només amb un membre o dispositiu de confiança.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Enllaçar aquest dispositiu amb un codi existent</Label>
+          <div className="flex gap-2">
+            <Input value={joinPayload} onChange={(e) => setJoinPayload(e.target.value)} placeholder='Enganxa aquí el codi generat des d’un altre dispositiu' />
             <Button variant="outline" size="icon" onClick={() => copyText(joinPayload)} disabled={!joinPayload}>
               <Link2 className="h-4 w-4" />
             </Button>
@@ -211,12 +242,43 @@ export function SyncPocPanel({ group }: SyncPocPanelProps) {
         </div>
 
         <div className="rounded-md border p-3 space-y-2">
-          <p className="font-medium flex items-center gap-2"><Wifi className="h-4 w-4" /> Estat</p>
-          {status.length === 0 ? (
-            <p className="text-muted-foreground">Encara no hi ha activitat.</p>
+          <button
+            type="button"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground"
+            onClick={() => setShowAdvanced((value) => !value)}
+          >
+            {showAdvanced ? 'Amagar configuració avançada' : 'Mostrar configuració avançada'}
+          </button>
+          {showAdvanced && (
+            <div className="space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <Label htmlFor="sync-host">PeerJS host</Label>
+                  <Input id="sync-host" value={hostInput} onChange={(e) => setHostInput(e.target.value)} />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="sync-path">Path</Label>
+                  <Input id="sync-path" value={pathInput} onChange={(e) => setPathInput(e.target.value)} />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="sync-stun">STUN/TURN URLs</Label>
+                <Input id="sync-stun" value={stunInput} onChange={(e) => setStunInput(e.target.value)} />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Aquesta part és per canviar a infraestructura pròpia. El flux normal no hauria de requerir tocar-la.
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-md border p-3 space-y-2">
+          <p className="font-medium text-foreground">Detall tècnic de la sessió</p>
+          {details.length === 0 ? (
+            <p className="text-muted-foreground">Encara no hi ha esdeveniments.</p>
           ) : (
             <ul className="space-y-1 text-muted-foreground">
-              {status.map((line, index) => (
+              {details.map((line, index) => (
                 <li key={`${line}-${index}`}>• {line}</li>
               ))}
             </ul>
