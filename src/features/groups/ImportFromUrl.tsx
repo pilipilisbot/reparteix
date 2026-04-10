@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Users, Receipt, CreditCard, CheckCircle, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Users, Receipt, CreditCard, CheckCircle, AlertCircle, Smartphone, Wifi } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { reparteix } from '../../sdk'
+import { readInvitePayload } from '../../sync/poc'
 import type { SyncEnvelopeV1, SyncReport } from '../../sdk'
 
 type ImportState =
@@ -14,6 +15,11 @@ type ImportState =
       envelope: SyncEnvelopeV1
       exists: boolean
     }
+  | {
+      status: 'sync-preview'
+      sync: { payload: string; peerId: string; deviceName?: string }
+      groupName: string
+    }
   | { status: 'importing' }
   | { status: 'done'; groupId: string }
 
@@ -21,12 +27,33 @@ export function ImportFromUrl() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const encoded = searchParams.get('g') ?? ''
+  const syncEncoded = searchParams.get('sync') ?? ''
   const [state, setState] = useState<ImportState>(() =>
-    encoded ? { status: 'loading' } : { status: 'error', message: 'No hi ha cap contingut per importar.' },
+    encoded || syncEncoded ? { status: 'loading' } : { status: 'error', message: 'No hi ha cap contingut per importar.' },
   )
   const [report, setReport] = useState<SyncReport | null>(null)
 
   useEffect(() => {
+    if (syncEncoded) {
+      void (async () => {
+        try {
+          const parsed = JSON.parse(syncEncoded) as { payload: string; peerId: string; deviceName?: string }
+          const invite = await readInvitePayload(parsed.payload)
+          setState({
+            status: 'sync-preview',
+            sync: parsed,
+            groupName: invite.groupName?.trim() || 'Grup sincronitzat',
+          })
+        } catch (err: unknown) {
+          setState({
+            status: 'error',
+            message: err instanceof Error ? err.message : 'Invitació de sync invàlida o corrupta.',
+          })
+        }
+      })()
+      return
+    }
+
     if (!encoded) return
 
     reparteix.share
@@ -41,7 +68,22 @@ export function ImportFromUrl() {
           message: err instanceof Error ? err.message : 'Enllaç invàlid o corrupte.',
         })
       })
-  }, [encoded])
+  }, [encoded, syncEncoded])
+
+  const handleStartSyncJoin = async () => {
+    if (state.status !== 'sync-preview') return
+    setState({ status: 'importing' })
+
+    try {
+      const group = await reparteix.createGroup(state.groupName)
+      navigate(`/group/${group.id}?sync=${encodeURIComponent(JSON.stringify(state.sync))}`)
+    } catch (err: unknown) {
+      setState({
+        status: 'error',
+        message: err instanceof Error ? err.message : 'No s\'ha pogut preparar el grup local per a la sync.',
+      })
+    }
+  }
 
   const handleImport = async () => {
     if (state.status !== 'preview') return
@@ -163,6 +205,15 @@ export function ImportFromUrl() {
           />
         )}
 
+        {state.status === 'sync-preview' && (
+          <SyncPreviewCard
+            groupName={state.groupName}
+            deviceName={state.sync.deviceName}
+            onContinue={handleStartSyncJoin}
+            onCancel={() => navigate('/')}
+          />
+        )}
+
         {state.status === 'importing' && (
           <Card className="shadow-md">
             <CardContent className="py-12 flex justify-center">
@@ -199,6 +250,54 @@ interface PreviewCardProps {
   onImport: () => void
   onImportAsCopy: () => void
   onCancel: () => void
+}
+
+interface SyncPreviewCardProps {
+  groupName: string
+  deviceName?: string
+  onContinue: () => void
+  onCancel: () => void
+}
+
+function SyncPreviewCard({ groupName, deviceName, onContinue, onCancel }: SyncPreviewCardProps) {
+  return (
+    <Card className="shadow-md">
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <Wifi className="h-4 w-4" />
+          Enllaçar dispositiu
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="rounded-lg bg-muted p-4 flex items-start gap-3">
+          <Smartphone className="h-5 w-5 mt-0.5 text-indigo-600" />
+          <div className="space-y-1 text-sm">
+            <p className="font-medium text-foreground">Preparat per unir-te a una sessió de sync</p>
+            <p className="text-muted-foreground">
+              Es crearà un grup local temporal per obrir la PoC i connectar aquest dispositiu amb{` `}
+              <span className="font-medium text-foreground">{groupName}</span>
+              {deviceName ? ` (${deviceName})` : ''}.
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-md border p-4 text-sm text-muted-foreground space-y-2">
+          <p>- no cal tenir el grup carregat abans</p>
+          <p>- la connexió es farà des de la pantalla del grup local</p>
+          <p>- la sessió continuarà mentre hi hagi algun peer actiu</p>
+        </div>
+
+        <div className="flex gap-2">
+          <Button onClick={onContinue} className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white">
+            Continuar i enllaçar
+          </Button>
+          <Button variant="outline" onClick={onCancel}>
+            Cancel·lar
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
 }
 
 function PreviewCard({ envelope, exists, onImport, onImportAsCopy, onCancel }: PreviewCardProps) {

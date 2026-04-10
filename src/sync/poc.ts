@@ -81,13 +81,19 @@ export async function applyEncryptedUpdate(doc: Y.Doc, envelope: SyncEnvelope, g
   Y.applyUpdate(doc, new Uint8Array(decrypted))
 }
 
-export async function createInvitePayload(groupKey: Uint8Array, groupId: string): Promise<string> {
-  return JSON.stringify({ groupId, key: toBase64(groupKey) })
+export async function createInvitePayload(
+  groupKey: Uint8Array,
+  groupId: string,
+  groupName?: string,
+): Promise<string> {
+  return JSON.stringify({ groupId, groupName, key: toBase64(groupKey) })
 }
 
-export async function readInvitePayload(payload: string): Promise<{ groupId: string; groupKey: Uint8Array }> {
-  const parsed = JSON.parse(payload) as { groupId: string; key: string }
-  return { groupId: parsed.groupId, groupKey: fromBase64(parsed.key) }
+export async function readInvitePayload(
+  payload: string,
+): Promise<{ groupId: string; groupKey: Uint8Array; groupName?: string }> {
+  const parsed = JSON.parse(payload) as { groupId: string; groupName?: string; key: string }
+  return { groupId: parsed.groupId, groupName: parsed.groupName, groupKey: fromBase64(parsed.key) }
 }
 
 export function debugSnapshot(snapshot: GroupSnapshot): string {

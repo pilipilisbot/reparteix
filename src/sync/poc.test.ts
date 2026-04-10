@@ -29,10 +29,11 @@ describe('sync poc', () => {
 
   it('creates a shareable invite payload with the group key', async () => {
     const groupKey = await generateGroupKey()
-    const payload = await createInvitePayload(groupKey, 'group-123')
+    const payload = await createInvitePayload(groupKey, 'group-123', 'Girona trip')
     const invite = await readInvitePayload(payload)
 
     expect(invite.groupId).toBe('group-123')
+    expect(invite.groupName).toBe('Girona trip')
     expect(Array.from(invite.groupKey)).toEqual(Array.from(groupKey))
   })
 

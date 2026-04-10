@@ -136,7 +136,7 @@ export function SyncPocPanel({ group }: SyncPocPanelProps) {
     sessionRef.current = session
     setHasSession(true)
 
-    const payload = await createInvitePayload(groupKey, group.id)
+    const payload = await createInvitePayload(groupKey, group.id, group.name)
     const joinData = JSON.stringify({ payload, peerId, deviceName })
     const url = `${window.location.origin}${window.location.pathname}#/import?sync=${encodeURIComponent(joinData)}`
     setInvitePayload(joinData)
