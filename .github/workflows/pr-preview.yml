@@ -163,23 +163,31 @@ jobs:
   cleanup-preview:
     if: github.event.action == 'closed'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      deployments: write
     steps:
       - name: Remove preview from staging repo
         env:
           STAGING_TOKEN: ${{ secrets.STAGING_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
+          set -euxo pipefail
+
           if [ -z "${STAGING_TOKEN}" ]; then
             echo "::warning::STAGING_TOKEN is not set. Skipping preview cleanup. Add the secret in repository settings."
             exit 0
           fi
 
           PR_DIR="pr-${PR_NUMBER}"
-          git clone --depth 1 "https://x-access-token:${STAGING_TOKEN}@github.com/reparteix/staging.git" /tmp/staging
+          STAGING_DIR="/tmp/staging-${PR_NUMBER}"
+          rm -rf "${STAGING_DIR}"
+          git clone --depth 1 "https://x-access-token:${STAGING_TOKEN}@github.com/reparteix/staging.git" "${STAGING_DIR}"
 
-          if [ -d "/tmp/staging/${PR_DIR}" ]; then
-            rm -rf "/tmp/staging/${PR_DIR}"
-            cd /tmp/staging
+          if [ -d "${STAGING_DIR}/${PR_DIR}" ]; then
+            rm -rf "${STAGING_DIR}/${PR_DIR}"
+            cd "${STAGING_DIR}"
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git add -A
@@ -223,8 +231,9 @@ jobs:
         with:
           script: |
             const prNumber = context.payload.pull_request.number;
+            const wasMerged = context.payload.pull_request.merged;
             const marker = '<!-- pr-preview-comment -->';
-            const body = `${marker}\n🗑️ **Preview removed.** (PR closed)`;
+            const body = `${marker}\n🗑️ **Preview removed.** (PR ${wasMerged ? 'merged' : 'closed without merge'})`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
@@ -239,6 +248,13 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: existing.id,
+                body: body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
                 body: body,
               });
             }
