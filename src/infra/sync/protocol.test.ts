@@ -110,5 +110,24 @@ describe('sync protocol', () => {
     it('returns null for missing required fields', () => {
       expect(decodeMessage('{"type":"hello"}')).toBeNull()
     })
+
+    it('decodes a raw object (as received with serialization: json)', () => {
+      const original = createHelloMessage('peer-1', ['g1'])
+      const decoded = decodeMessage(original)
+      expect(decoded).toEqual(original)
+    })
+
+    it('decodes a parsed sync-data object', () => {
+      const payload = { iv: 'aWY=', ciphertext: 'Y2lwaGVy', salt: 'c2FsdA==' }
+      const original = createSyncDataMessage('group-x', payload)
+      const decoded = decodeMessage(original)
+      expect(decoded).toEqual(original)
+    })
+
+    it('returns null for non-string non-object input', () => {
+      expect(decodeMessage(42)).toBeNull()
+      expect(decodeMessage(null)).toBeNull()
+      expect(decodeMessage(undefined)).toBeNull()
+    })
   })
 })

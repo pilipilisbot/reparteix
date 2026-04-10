@@ -104,10 +104,10 @@ export function encodeMessage(message: SyncMessage): string {
   return JSON.stringify(message)
 }
 
-/** Decode and validate a raw JSON string into a SyncMessage. Returns null if invalid. */
-export function decodeMessage(raw: string): SyncMessage | null {
+/** Decode and validate a raw message into a SyncMessage. Accepts either a JSON string or a parsed object. Returns null if invalid. */
+export function decodeMessage(raw: unknown): SyncMessage | null {
   try {
-    const parsed: unknown = JSON.parse(raw)
+    const parsed: unknown = typeof raw === 'string' ? JSON.parse(raw) : raw
     return SyncMessageSchema.parse(parsed)
   } catch {
     return null

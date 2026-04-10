@@ -13,7 +13,7 @@
 
 import type { SyncConfig } from './config'
 import type { SyncMessage } from './protocol'
-import { encodeMessage, decodeMessage } from './protocol'
+import { decodeMessage } from './protocol'
 
 // ─── Minimal PeerJS type interfaces ─────────────────────────────────────────
 
@@ -21,7 +21,7 @@ import { encodeMessage, decodeMessage } from './protocol'
 interface PeerDataConnection {
   readonly peer: string
   readonly open: boolean
-  send(data: string): void
+  send(data: unknown): void
   close(): void
   on(event: 'open', callback: () => void): void
   on(event: 'data', callback: (data: unknown) => void): void
@@ -112,7 +112,9 @@ export function createPeerManager(options: PeerManagerOptions) {
       state: 'connecting',
       send: (message: SyncMessage) => {
         if (dataConn.open) {
-          dataConn.send(encodeMessage(message))
+          // With serialization: 'json', PeerJS handles JSON.stringify/parse
+          // and message chunking for large payloads.
+          dataConn.send(message)
         }
       },
       close: () => {
@@ -128,7 +130,8 @@ export function createPeerManager(options: PeerManagerOptions) {
     })
 
     dataConn.on('data', (raw: unknown) => {
-      if (typeof raw !== 'string') return
+      // PeerJS with serialization: 'json' delivers parsed objects.
+      // Validate with Zod for safety.
       const message = decodeMessage(raw)
       if (message) {
         events.onMessage?.(remotePeerId, message)
@@ -229,10 +232,9 @@ export function createPeerManager(options: PeerManagerOptions) {
 
       const dataConn = peer.connect(remotePeerId, {
         reliable: true,
-        // PeerJS v1.x supports raw|json|binary|binary-utf8|default.
-        // We send protocol frames as encoded strings, so raw is sufficient
-        // and avoids runtime crashes from the invalid custom value "none".
-        serialization: 'raw',
+        // PeerJS v1.x: 'json' enables built-in message chunking for large
+        // payloads and handles JSON.stringify/parse automatically.
+        serialization: 'json',
       })
 
       const connection = wrapConnection(dataConn, remotePeerId)
