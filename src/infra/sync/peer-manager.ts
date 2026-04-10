@@ -229,7 +229,10 @@ export function createPeerManager(options: PeerManagerOptions) {
 
       const dataConn = peer.connect(remotePeerId, {
         reliable: true,
-        serialization: 'none',
+        // PeerJS v1.x supports raw|json|binary|binary-utf8|default.
+        // We send protocol frames as encoded strings, so raw is sufficient
+        // and avoids runtime crashes from the invalid custom value "none".
+        serialization: 'raw',
       })
 
       const connection = wrapConnection(dataConn, remotePeerId)
