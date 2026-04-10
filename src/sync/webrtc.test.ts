@@ -1,19 +1,28 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+type MockEventValue = unknown
+type MockHandler = (value: MockEventValue) => void
+
+type MockConnectCall = {
+  remotePeerId: string
+  options: unknown
+  connection: InstanceType<typeof MockConnection>
+}
+
 const { MockConnection, MockPeer, peerInstances } = vi.hoisted(() => {
-  const peerInstances: any[] = []
+  const peerInstances: MockPeer[] = []
 
   class MockConnection {
     peer: string
     open = false
     sent: string[] = []
-    handlers: Record<string, Array<(value: any) => void>> = {}
+    handlers: Record<string, MockHandler[]> = {}
 
     constructor(peer: string) {
       this.peer = peer
     }
 
-    on(event: string, handler: (value: any) => void) {
+    on(event: string, handler: MockHandler) {
       this.handlers[event] ??= []
       this.handlers[event].push(handler)
       return this
@@ -27,7 +36,7 @@ const { MockConnection, MockPeer, peerInstances } = vi.hoisted(() => {
       this.emit('close', undefined)
     }
 
-    emit(event: string, value: any) {
+    emit(event: string, value: MockEventValue) {
       for (const handler of this.handlers[event] ?? []) {
         handler(value)
       }
@@ -37,8 +46,8 @@ const { MockConnection, MockPeer, peerInstances } = vi.hoisted(() => {
   class MockPeer {
     id: string
     options: unknown
-    handlers: Record<string, Array<(value: any) => void>> = {}
-    connectCalls: Array<{ remotePeerId: string; options: unknown; connection: InstanceType<typeof MockConnection> }> = []
+    handlers: Record<string, MockHandler[]> = {}
+    connectCalls: MockConnectCall[] = []
     destroyed = false
 
     constructor(id: string, options: unknown) {
@@ -47,7 +56,7 @@ const { MockConnection, MockPeer, peerInstances } = vi.hoisted(() => {
       peerInstances.push(this)
     }
 
-    on(event: string, handler: (value: any) => void) {
+    on(event: string, handler: MockHandler) {
       this.handlers[event] ??= []
       this.handlers[event].push(handler)
       return this
@@ -63,7 +72,7 @@ const { MockConnection, MockPeer, peerInstances } = vi.hoisted(() => {
       this.destroyed = true
     }
 
-    emit(event: string, value: any) {
+    emit(event: string, value: MockEventValue) {
       for (const handler of this.handlers[event] ?? []) {
         handler(value)
       }
