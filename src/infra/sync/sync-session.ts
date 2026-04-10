@@ -96,13 +96,34 @@ export function createSyncSession(
 
   const config = createSyncConfig(configOverrides)
 
+  /** Translate common PeerJS errors to user-friendly Catalan messages. */
+  function friendlyError(err: Error): string {
+    const msg = err.message ?? ''
+    if (msg.includes('Could not connect to peer') || msg.includes('peer-unavailable')) {
+      return 'L\'altre dispositiu no està disponible. Assegura\'t que té la sessió de sync oberta.'
+    }
+    if (msg.includes('is taken') || msg.includes('unavailable-id')) {
+      return 'Ja hi ha una sessió activa amb aquesta contrasenya. Tanca-la i torna-ho a provar.'
+    }
+    if (msg.includes('Lost connection to server') || msg.includes('disconnected')) {
+      return 'S\'ha perdut la connexió amb el servidor de senyalització.'
+    }
+    if (msg.includes('timeout') || msg.includes('timed out')) {
+      return 'La connexió ha trigat massa. Comprova la xarxa i torna-ho a provar.'
+    }
+    return msg
+  }
+
   const peerManager = createPeerManager({
     config,
     events: {
       onMessage: handleMessage,
       onPeerConnected: handlePeerConnected,
       onPeerDisconnected: handlePeerDisconnected,
-      onError: (err) => update({ state: 'error', error: err.message, message: `Error: ${err.message}` }),
+      onError: (err) => {
+        const friendly = friendlyError(err)
+        update({ state: 'error', error: friendly, message: `Error: ${friendly}` })
+      },
       onStateChange: handleStateChange,
     },
   })
@@ -336,7 +357,7 @@ export function createSyncSession(
         })
         return peerId
       } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Error inicialitzant'
+        const msg = err instanceof Error ? friendlyError(err) : 'Error inicialitzant'
         update({ state: 'error', error: msg, message: `Error: ${msg}` })
         throw err
       }
@@ -358,7 +379,7 @@ export function createSyncSession(
         await peerManager.connectTo(roomPeerId)
         // The rest is handled by onPeerConnected → handlePeerConnected
       } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Error connectant'
+        const msg = err instanceof Error ? friendlyError(err) : 'Error connectant'
         update({ state: 'error', error: msg, message: `Error: ${msg}` })
         throw err
       }

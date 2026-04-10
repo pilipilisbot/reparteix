@@ -96,6 +96,9 @@ export function createPeerManager(options: PeerManagerOptions) {
   let peer: PeerInstance | null = null
   let localPeerId: string | null = null
   let state: ConnectionState = 'disconnected'
+  // Reject callback for the current connectTo() promise — allows Peer-level
+  // errors (e.g. peer-unavailable) to propagate to the connection attempt.
+  let pendingConnectReject: ((err: Error) => void) | null = null
 
   function setState(newState: ConnectionState) {
     state = newState
@@ -201,6 +204,12 @@ export function createPeerManager(options: PeerManagerOptions) {
           clearTimeout(timeout)
           setState('error')
           events.onError?.(err)
+          // If there's a pending connectTo() promise, reject it too so it
+          // doesn't hang until its own timeout fires.
+          if (pendingConnectReject) {
+            pendingConnectReject(err)
+            pendingConnectReject = null
+          }
           reject(err)
         })
 
@@ -226,16 +235,25 @@ export function createPeerManager(options: PeerManagerOptions) {
 
       return new Promise<PeerConnection>((resolve, reject) => {
         const timeout = setTimeout(() => {
+          pendingConnectReject = null
           reject(new Error(`Connection to peer ${remotePeerId} timed out`))
         }, config.connectionTimeoutMs)
 
+        // Register so Peer-level errors (e.g. peer-unavailable) reject this promise.
+        pendingConnectReject = (err: Error) => {
+          clearTimeout(timeout)
+          reject(err)
+        }
+
         dataConn.on('open', () => {
           clearTimeout(timeout)
+          pendingConnectReject = null
           resolve(connection)
         })
 
         dataConn.on('error', (err: Error) => {
           clearTimeout(timeout)
+          pendingConnectReject = null
           reject(err)
         })
       })

@@ -80,15 +80,19 @@ export function SyncFromUrl() {
     passphrase,
   })
 
+  // Extract stable references to avoid re-triggering the effect on every render
+  const syncState = sync.state
+  const syncJoinSession = sync.joinSession
+
   // Auto-start join when passphrase is decoded and no error
   useEffect(() => {
-    if (passphrase && !decodeError && !autoStarted.current && sync.state === 'idle') {
+    if (passphrase && !decodeError && !autoStarted.current && syncState === 'idle') {
       autoStarted.current = true
-      sync.joinSession().catch(() => {
+      syncJoinSession().catch(() => {
         // Error handled by the sync hook
       })
     }
-  }, [passphrase, decodeError, sync])
+  }, [passphrase, decodeError, syncState, syncJoinSession])
 
   const handleDone = async () => {
     sync.reset()
@@ -210,6 +214,11 @@ export function SyncFromUrl() {
             <p className="text-sm">
               {sync.message || 'Connectant amb l\'altre dispositiu…'}
             </p>
+
+            {/* Error details */}
+            {sync.state === 'error' && sync.error && (
+              <p className="text-sm text-destructive">{sync.error}</p>
+            )}
 
             {/* Sync report on success */}
             {sync.state === 'completed' && sync.report && (
