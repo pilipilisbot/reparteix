@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   RefreshCw,
   Wifi,
@@ -25,6 +25,7 @@ import { Badge } from '@/components/ui/badge'
 import { useSync } from '@/hooks/useSync'
 import { useStore } from '@/store'
 import { encodeBase64Url } from '@/lib/base64url'
+import { loadStoredSyncPassphrase, saveStoredSyncPassphrase } from '@/lib/sync-passphrase'
 import type { SyncReport } from '@/domain/services/sync'
 
 interface SyncPanelProps {
@@ -148,7 +149,14 @@ function StateBadge({ state }: { state: string }) {
 }
 
 export function SyncPanel({ groupId }: SyncPanelProps) {
-  const [passphrase, setPassphrase] = useState('')
+  const group = useStore((state) => state.groups.find((item) => item.id === groupId))
+  const updateGroup = useStore((state) => state.updateGroup)
+  const rememberedPassphrase = useMemo(
+    () => group?.syncPassphrase || loadStoredSyncPassphrase(groupId),
+    [group?.syncPassphrase, groupId],
+  )
+
+  const [passphrase, setPassphrase] = useState(rememberedPassphrase)
   const [showPassphrase, setShowPassphrase] = useState(false)
   const [mode, setMode] = useState<'choose' | 'host' | 'join'>('choose')
   const [copied, setCopied] = useState(false)
@@ -163,9 +171,27 @@ export function SyncPanel({ groupId }: SyncPanelProps) {
   const isActive = sync.state !== 'idle' && sync.state !== 'error' && sync.state !== 'completed'
   const canStart = passphrase.length >= 4
 
+  useEffect(() => {
+    setPassphrase(rememberedPassphrase)
+  }, [rememberedPassphrase])
+
+  useEffect(() => {
+    saveStoredSyncPassphrase(groupId, passphrase)
+  }, [groupId, passphrase])
+
+  const persistPassphrase = async (value: string) => {
+    const nextValue = value.trim()
+    saveStoredSyncPassphrase(groupId, nextValue)
+
+    if (group && group.syncPassphrase !== nextValue) {
+      await updateGroup(groupId, { syncPassphrase: nextValue })
+    }
+  }
+
   const handleStart = async (selectedMode: 'host' | 'join') => {
     setMode(selectedMode)
     try {
+      await persistPassphrase(passphrase)
       if (selectedMode === 'host') {
         await sync.startAsHost()
       } else {
@@ -229,6 +255,9 @@ export function SyncPanel({ groupId }: SyncPanelProps) {
                 type={showPassphrase ? 'text' : 'password'}
                 value={passphrase}
                 onChange={(e) => setPassphrase(e.target.value)}
+                onBlur={() => {
+                  void persistPassphrase(passphrase)
+                }}
                 placeholder="Mínim 4 caràcters"
                 disabled={isActive}
                 autoComplete="new-password"
@@ -244,7 +273,7 @@ export function SyncPanel({ groupId }: SyncPanelProps) {
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            Les dades es xifren extrem a extrem amb aquesta contrasenya.
+            La contrasenya queda guardada en aquest grup i també al navegador d'aquest dispositiu.
           </p>
         </div>
 

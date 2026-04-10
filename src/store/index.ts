@@ -13,7 +13,7 @@ interface AppState {
   loadGroups: () => Promise<void>
   loadGroupData: (groupId: string) => Promise<void>
   addGroup: (name: string) => Promise<Group>
-  updateGroup: (id: string, updates: { name?: string; description?: string; icon?: string; currency?: string }) => Promise<void>
+  updateGroup: (id: string, updates: { name?: string; description?: string; icon?: string; currency?: string; syncPassphrase?: string }) => Promise<void>
   deleteGroup: (id: string) => Promise<void>
   archiveGroup: (id: string) => Promise<void>
   unarchiveGroup: (id: string) => Promise<void>

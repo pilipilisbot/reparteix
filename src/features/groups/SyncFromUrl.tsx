@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge'
 import { useSync } from '@/hooks/useSync'
 import { useStore } from '@/store'
 import { decodeBase64Url } from '@/lib/base64url'
+import { saveStoredSyncPassphrase } from '@/lib/sync-passphrase'
 import type { SyncReport } from '@/domain/services/sync'
 
 /** Sync states where the session is still loading/in-progress */
@@ -80,6 +81,12 @@ export function SyncFromUrl() {
     passphrase,
   })
 
+  useEffect(() => {
+    if (passphrase) {
+      saveStoredSyncPassphrase(groupId, passphrase)
+    }
+  }, [groupId, passphrase])
+
   // Extract stable references to avoid re-triggering the effect on every render
   const syncState = sync.state
   const syncJoinSession = sync.joinSession
@@ -95,6 +102,7 @@ export function SyncFromUrl() {
   }, [passphrase, decodeError, syncState, syncJoinSession])
 
   const handleDone = async () => {
+    saveStoredSyncPassphrase(groupId, passphrase)
     sync.reset()
     await loadGroups()
     await loadGroupData(groupId)
@@ -102,6 +110,7 @@ export function SyncFromUrl() {
   }
 
   const handleRetry = () => {
+    saveStoredSyncPassphrase(groupId, passphrase)
     autoStarted.current = false
     sync.reset()
   }
