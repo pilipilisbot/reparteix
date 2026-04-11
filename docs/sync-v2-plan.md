@@ -108,7 +108,7 @@ Goal: make the system operationally useful in real life.
 ### UI / product
 
 - [x] replace send/receive with unified sync CTA
-- [ ] add explicit "last synced" and "last error" indicators
+- [x] add explicit "last synced" and "last error" indicators
 - [x] add peer list / presence summary
 - [ ] add conflict banner or resolution entry point
 - [x] expose basic runtime diagnostics (`lastAttemptAt`, `lastSuccessAt`)

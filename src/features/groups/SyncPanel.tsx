@@ -319,8 +319,19 @@ export function SyncPanel({ groupId }: SyncPanelProps) {
             </div>
 
             {/* Status message */}
-            <div className="space-y-1">
+            <div className="space-y-2">
               <p className="text-sm">{sync.message}</p>
+              {sync.error && (
+                <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <div>
+                      <p className="font-medium">Error de sincronització</p>
+                      <p>{sync.error}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
               {(sync.remotePeerIds.length > 0 || sync.lastAttemptAt || sync.lastSuccessAt) && (
                 <div className="space-y-1 text-xs text-muted-foreground">
                   {sync.remotePeerIds.length > 0 && (
@@ -357,7 +368,7 @@ export function SyncPanel({ groupId }: SyncPanelProps) {
                   {copiedLink ? 'Enllaç copiat!' : 'Copiar enllaç de sync'}
                 </Button>
                 <p className="text-xs text-muted-foreground">
-                  O bé, manualment: obre Reparteix a l'altre dispositiu, ves al Sync del mateix grup, escriu la mateixa contrasenya i prem «Rebre».
+                  A l'altre dispositiu només cal obrir Reparteix al mateix grup, escriure la mateixa contrasenya i prémer «Sincronitzar».
                 </p>
               </div>
             )}
