@@ -7,6 +7,8 @@ export interface UseSyncOptions {
   groupId: string
   passphrase: string
   configOverrides?: SyncConfigOverrides
+  autoRetryEnabled?: boolean
+  autoRetryMs?: number
 }
 
 export interface UseSyncReturn {
@@ -28,6 +30,8 @@ export interface UseSyncReturn {
   lastAttemptAt: string | null
   /** Last successful sync timestamp */
   lastSuccessAt: string | null
+  /** Whether automatic retry is currently armed */
+  autoRetryEnabled: boolean
   /** Sync v2 primary entry point: create room or join existing one */
   startSync: () => Promise<void>
   /** Start as host — create a room and wait for peer */
@@ -38,7 +42,13 @@ export interface UseSyncReturn {
   reset: () => void
 }
 
-export function useSync({ groupId, passphrase, configOverrides }: UseSyncOptions): UseSyncReturn {
+export function useSync({
+  groupId,
+  passphrase,
+  configOverrides,
+  autoRetryEnabled = false,
+  autoRetryMs = 15000,
+}: UseSyncOptions): UseSyncReturn {
   const [status, setStatus] = useState<SyncSessionStatus>({
     state: 'idle',
     peerId: null,
@@ -54,10 +64,16 @@ export function useSync({ groupId, passphrase, configOverrides }: UseSyncOptions
   })
 
   const sessionRef = useRef<ReturnType<typeof createSyncSession> | null>(null)
+  const retryTimerRef = useRef<number | null>(null)
+  const retryInFlightRef = useRef(false)
 
   // Clean up on unmount or when key params change
   useEffect(() => {
     return () => {
+      if (retryTimerRef.current !== null) {
+        window.clearInterval(retryTimerRef.current)
+        retryTimerRef.current = null
+      }
       sessionRef.current?.destroy()
       sessionRef.current = null
     }
@@ -88,6 +104,10 @@ export function useSync({ groupId, passphrase, configOverrides }: UseSyncOptions
   }, [ensureSession])
 
   const reset = useCallback(() => {
+    if (retryTimerRef.current !== null) {
+      window.clearInterval(retryTimerRef.current)
+      retryTimerRef.current = null
+    }
     sessionRef.current?.destroy()
     sessionRef.current = null
     setStatus({
@@ -105,6 +125,47 @@ export function useSync({ groupId, passphrase, configOverrides }: UseSyncOptions
     })
   }, [groupId, passphrase])
 
+  useEffect(() => {
+    if (!autoRetryEnabled) {
+      if (retryTimerRef.current !== null) {
+        window.clearInterval(retryTimerRef.current)
+        retryTimerRef.current = null
+      }
+      return
+    }
+
+    if (retryTimerRef.current !== null) return
+
+    retryTimerRef.current = window.setInterval(() => {
+      if (document.visibilityState === 'hidden') return
+      if (retryInFlightRef.current) return
+      if (passphrase.trim().length < 4) return
+
+      const shouldRetry = status.state === 'error' || status.state === 'completed'
+      if (!shouldRetry) return
+
+      retryInFlightRef.current = true
+      void (async () => {
+        try {
+          reset()
+          const session = ensureSession()
+          await session.startSync()
+        } catch {
+          // surfaced by session status
+        } finally {
+          retryInFlightRef.current = false
+        }
+      })()
+    }, autoRetryMs)
+
+    return () => {
+      if (retryTimerRef.current !== null) {
+        window.clearInterval(retryTimerRef.current)
+        retryTimerRef.current = null
+      }
+    }
+  }, [autoRetryEnabled, autoRetryMs, ensureSession, passphrase, reset, status.state])
+
   return {
     state: status.state,
     peerId: status.peerId,
@@ -115,6 +176,7 @@ export function useSync({ groupId, passphrase, configOverrides }: UseSyncOptions
     report: status.report,
     lastAttemptAt: status.lastAttemptAt,
     lastSuccessAt: status.lastSuccessAt,
+    autoRetryEnabled,
     startSync,
     startAsHost,
     joinSession,

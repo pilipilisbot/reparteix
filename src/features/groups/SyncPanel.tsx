@@ -179,6 +179,7 @@ export function SyncPanel({ groupId }: SyncPanelProps) {
   const sync = useSync({
     groupId,
     passphrase,
+    autoRetryEnabled: mode !== 'idle',
   })
 
   const isActive = sync.state !== 'idle' && sync.state !== 'error' && sync.state !== 'completed'
@@ -330,6 +331,9 @@ export function SyncPanel({ groupId }: SyncPanelProps) {
                   )}
                   {sync.lastSuccessAt && (
                     <p>Última sync correcta: {formatSyncTimestamp(sync.lastSuccessAt)}</p>
+                  )}
+                  {sync.autoRetryEnabled && (
+                    <p>Reintent automàtic actiu mentre aquest panell estigui obert</p>
                   )}
                 </div>
               )}
