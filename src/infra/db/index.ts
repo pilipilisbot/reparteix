@@ -47,4 +47,21 @@ db.version(3)
       })
   })
 
+db.version(4)
+  .stores({
+    groups: 'id, name, deleted, archived',
+    expenses: 'id, groupId, deleted, archived',
+    payments: 'id, groupId, deleted',
+  })
+  .upgrade((tx) => {
+    return tx
+      .table('groups')
+      .toCollection()
+      .modify((group: Record<string, unknown>) => {
+        if (group['syncPassphrase'] === undefined) {
+          group['syncPassphrase'] = ''
+        }
+      })
+  })
+
 export { db }

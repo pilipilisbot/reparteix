@@ -1,7 +1,7 @@
 ---
 name: reparteix
 description: Manage shared expenses — create groups, add members, track expenses (equal or proportional splits) and payments, calculate balances and minimum settlements. Export/import groups as JSON. Sync groups from external JSON snapshots with LWW merge. Local-first, offline-capable PWA.
-version: 1.4.0
+version: 1.6.0
 author: pilipilisbot
 tags:
   - expenses
@@ -43,6 +43,8 @@ Use this skill when the user wants to:
 - **Import** a group from a `.reparteix.json` file (new envelope format) or from the legacy JSON format (backward compatible). Uses Last-Write-Wins conflict resolution.
 - **Open files directly** from the installed PWA (File Handling API on Chromium) or via manual file picker (universal fallback).
 - **Sync** a group from an external JSON snapshot using deterministic LWW merge with conflict detection and referential integrity checks.
+- **Encrypt/decrypt** sync payloads end-to-end using AES-256-GCM with PBKDF2 key derivation from a group passphrase.
+- **P2P sync** (PoC) — connect peers via WebRTC + PeerJS for browser-to-browser sync with configurable STUN/TURN.
 
 ## Project Setup
 
@@ -69,15 +71,29 @@ npm run test
 src/
   domain/
     entities/       # Zod schemas and TypeScript types
-    services/       # Pure business logic (balances, settlements)
+    services/       # Pure business logic (balances, settlements, crypto)
   infra/
     db/             # Dexie (IndexedDB) database
+    sync/           # P2P sync infrastructure (PeerJS, protocol, config)
   features/         # React UI feature modules
+  hooks/            # React hooks (useSync, useTheme, useFileHandler)
   store/            # Zustand global state
   sdk.ts            # Headless SDK — the main programmatic API
 ```
 
 The headless SDK (`src/sdk.ts`) is the primary entry point for all operations. It wraps IndexedDB persistence and exposes a clean async API.
+
+### P2P Sync Architecture
+
+The sync system enables browser-to-browser synchronization without a backend:
+
+- **Transport**: WebRTC data channels via PeerJS (`src/infra/sync/peer-manager.ts`)
+- **Encryption**: AES-256-GCM + PBKDF2 key derivation (`src/domain/services/crypto.ts`)
+- **Protocol**: Typed messages validated with Zod (`src/infra/sync/protocol.ts`)
+- **Config**: Configurable PeerJS/STUN/TURN endpoints (`src/infra/sync/config.ts`)
+- **Session**: Full sync orchestrator (`src/infra/sync/sync-session.ts`)
+- **UI**: SyncPanel component in GroupSettings (`src/features/groups/SyncPanel.tsx`)
+- **Hook**: `useSync` React hook (`src/hooks/useSync.ts`)
 
 ## SDK API Reference
 
@@ -146,6 +162,24 @@ import { reparteix } from './src/sdk'
 |--------|-----------|-------------|
 | `sync.applyGroupJson` | `(raw: unknown) => Promise<SyncReport>` | Apply an incoming `SyncEnvelopeV1` to the local database. LWW merge, conflict detection, referential integrity checks, Dexie transaction |
 | `sync.previewGroupJson` | `(raw: unknown) => Promise<SyncReport>` | Same as `applyGroupJson` but performs no writes — useful for showing a diff before confirming |
+
+### Crypto (app-level encryption)
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `encryptSyncPayload` | `(passphrase: string, data: string) => Promise<EncryptedPayload>` | Encrypt a JSON string end-to-end using AES-256-GCM with PBKDF2 key derivation |
+| `decryptSyncPayload` | `(passphrase: string, encrypted: EncryptedPayload) => Promise<string>` | Decrypt an encrypted payload using the group passphrase |
+| `deriveGroupKey` | `(passphrase: string, salt: Uint8Array) => Promise<CryptoKey>` | Derive an AES-256-GCM key from a passphrase and salt |
+| `generateSalt` | `() => Uint8Array` | Generate a cryptographically random 16-byte salt |
+
+### P2P Sync Infrastructure (`src/infra/sync/`)
+
+| Module | Description |
+|--------|-------------|
+| `config.ts` | `SyncConfig` type, `DEFAULT_SYNC_CONFIG` (public PeerJS + Google STUN), `createSyncConfig()` for overrides |
+| `protocol.ts` | 5 message types (hello, request-sync, sync-data, sync-ack, error) as Zod discriminated union |
+| `peer-manager.ts` | PeerJS wrapper: `createPeerManager()` for WebRTC connection lifecycle |
+| `sync-session.ts` | Full sync orchestrator: `createSyncSession()` handles encryption, protocol, and merge |
 
 ## Domain Entities
 
@@ -384,6 +418,8 @@ await reparteix.addPayment({
 | Tests | Vitest + @testing-library/jest-dom |
 | Releases | semantic-release (Conventional Commits) |
 | Deploy | GitHub Actions → GitHub Pages |
+| P2P Transport | PeerJS 1.x (WebRTC data channels) |
+| Encryption | WebCrypto API (AES-256-GCM + PBKDF2) |
 
 ## Maintenance
 

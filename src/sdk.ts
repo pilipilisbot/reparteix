@@ -112,7 +112,7 @@ export const reparteix = {
     return group
   },
 
-  /** Update group metadata (name, description, icon, currency). Throws if the group is archived. */
+  /** Update group metadata (name, description, icon, currency, syncPassphrase). Throws if the group is archived. */
   async updateGroup(
     id: string,
     updates: {
@@ -120,6 +120,7 @@ export const reparteix = {
       description?: string
       icon?: string
       currency?: string
+      syncPassphrase?: string
     },
   ): Promise<Group> {
     const group = await db.groups.get(id)
