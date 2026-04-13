@@ -96,7 +96,7 @@ function GroupSettingsForm({ group, groupId }: GroupSettingsFormProps) {
       const url = `${window.location.origin}${window.location.pathname}#/import?g=${encoded}`
       await shareUrl({
         title: `Grup ${group.name} · Reparteix`,
-        text: `Importa el grup \"${group.name}\" a Reparteix`,
+        text: `Importa el grup "${group.name}" a Reparteix`,
         url,
       })
       setShareStatus('ok')

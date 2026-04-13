@@ -7,36 +7,39 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
 type State =
-  | { status: 'loading' }
+  | { status: 'loading'; text: string }
   | { status: 'error'; message: string }
   | { status: 'done'; groupId: string }
+
+function getInitialState(): State {
+  const pending = loadPendingSharedFile()
+
+  if (!pending) {
+    return { status: 'error', message: 'No hi ha cap fitxer compartit pendent.' }
+  }
+
+  if (pending.error) {
+    clearPendingSharedFile()
+    return { status: 'error', message: pending.error }
+  }
+
+  if (!pending.text) {
+    clearPendingSharedFile()
+    return { status: 'error', message: 'El fitxer compartit no conté dades llegibles.' }
+  }
+
+  return { status: 'loading', text: pending.text }
+}
 
 export function ShareTargetImport() {
   const navigate = useNavigate()
   const importGroup = useStore((state) => state.importGroup)
-  const [state, setState] = useState<State>({ status: 'loading' })
+  const [state, setState] = useState<State>(() => getInitialState())
 
   useEffect(() => {
-    const pending = loadPendingSharedFile()
+    if (state.status !== 'loading') return
 
-    if (!pending) {
-      setState({ status: 'error', message: 'No hi ha cap fitxer compartit pendent.' })
-      return
-    }
-
-    if (pending.error) {
-      clearPendingSharedFile()
-      setState({ status: 'error', message: pending.error })
-      return
-    }
-
-    if (!pending.text) {
-      clearPendingSharedFile()
-      setState({ status: 'error', message: 'El fitxer compartit no conté dades llegibles.' })
-      return
-    }
-
-    const text = pending.text
+    const text = state.text
 
     ;(async () => {
       try {
@@ -51,7 +54,7 @@ export function ShareTargetImport() {
         })
       }
     })()
-  }, [importGroup])
+  }, [importGroup, state])
 
   return (
     <div className="min-h-screen bg-muted/50 px-4 py-10">
