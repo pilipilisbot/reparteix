@@ -3,10 +3,13 @@ import {
   createHelloMessage,
   createRequestSyncMessage,
   createSyncDataMessage,
+  createSyncDataChunkMessage,
   createSyncAckMessage,
   createErrorMessage,
   encodeMessage,
   decodeMessage,
+  MAX_SYNC_DATA_CHUNKS,
+  MAX_SYNC_DATA_CHUNK_LENGTH,
   SYNC_PROTOCOL_VERSION,
 } from './protocol'
 
@@ -31,6 +34,18 @@ describe('sync protocol', () => {
       const payload = { iv: 'aWY=', ciphertext: 'Y2lwaGVy', salt: 'c2FsdA==' }
       const msg = createSyncDataMessage('group-a', payload)
       expect(msg).toEqual({ type: 'sync-data', groupId: 'group-a', payload })
+    })
+
+    it('creates a sync-data-chunk message', () => {
+      const msg = createSyncDataChunkMessage('group-a', 'transfer-1', 0, 3, 'chunk-1')
+      expect(msg).toEqual({
+        type: 'sync-data-chunk',
+        groupId: 'group-a',
+        transferId: 'transfer-1',
+        index: 0,
+        total: 3,
+        chunk: 'chunk-1',
+      })
     })
 
     it('creates a sync-ack message with ok status', () => {
@@ -76,6 +91,13 @@ describe('sync protocol', () => {
     it('round-trips a sync-data message', () => {
       const payload = { iv: 'aWY=', ciphertext: 'Y2lwaGVy', salt: 'c2FsdA==' }
       const original = createSyncDataMessage('group-x', payload)
+      const encoded = encodeMessage(original)
+      const decoded = decodeMessage(encoded)
+      expect(decoded).toEqual(original)
+    })
+
+    it('round-trips a sync-data-chunk message', () => {
+      const original = createSyncDataChunkMessage('group-x', 'transfer-2', 1, 4, 'payload-slice')
       const encoded = encodeMessage(original)
       const decoded = decodeMessage(encoded)
       expect(decoded).toEqual(original)
@@ -128,6 +150,45 @@ describe('sync protocol', () => {
       expect(decodeMessage(42)).toBeNull()
       expect(decodeMessage(null)).toBeNull()
       expect(decodeMessage(undefined)).toBeNull()
+    })
+
+    it('returns null for sync-data-chunk with index out of range', () => {
+      expect(
+        decodeMessage({
+          type: 'sync-data-chunk',
+          groupId: 'group-x',
+          transferId: 'transfer-1',
+          index: 3,
+          total: 3,
+          chunk: 'abc',
+        }),
+      ).toBeNull()
+    })
+
+    it('returns null for sync-data-chunk with too many chunks', () => {
+      expect(
+        decodeMessage({
+          type: 'sync-data-chunk',
+          groupId: 'group-x',
+          transferId: 'transfer-1',
+          index: 0,
+          total: MAX_SYNC_DATA_CHUNKS + 1,
+          chunk: 'abc',
+        }),
+      ).toBeNull()
+    })
+
+    it('returns null for sync-data-chunk with chunk payload too large', () => {
+      expect(
+        decodeMessage({
+          type: 'sync-data-chunk',
+          groupId: 'group-x',
+          transferId: 'transfer-1',
+          index: 0,
+          total: 1,
+          chunk: 'a'.repeat(MAX_SYNC_DATA_CHUNK_LENGTH + 1),
+        }),
+      ).toBeNull()
     })
   })
 })

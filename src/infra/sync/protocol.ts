@@ -33,6 +33,28 @@ const SyncDataMessageSchema = z.object({
   payload: EncryptedPayloadSchema,
 })
 
+export const MAX_SYNC_DATA_CHUNKS = 1024
+export const MAX_SYNC_DATA_CHUNK_LENGTH = 8_000
+
+const SyncDataChunkMessageSchema = z
+  .object({
+    type: z.literal('sync-data-chunk'),
+    groupId: z.string(),
+    transferId: z.string(),
+    index: z.number().int().min(0),
+    total: z.number().int().positive().max(MAX_SYNC_DATA_CHUNKS),
+    chunk: z.string().min(1).max(MAX_SYNC_DATA_CHUNK_LENGTH),
+  })
+  .superRefine((value, ctx) => {
+    if (value.index >= value.total) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['index'],
+        message: 'Chunk index must be less than total chunks',
+      })
+    }
+  })
+
 const SyncAckMessageSchema = z.object({
   type: z.literal('sync-ack'),
   groupId: z.string(),
@@ -50,6 +72,7 @@ export const SyncMessageSchema = z.discriminatedUnion('type', [
   HelloMessageSchema,
   RequestSyncMessageSchema,
   SyncDataMessageSchema,
+  SyncDataChunkMessageSchema,
   SyncAckMessageSchema,
   ErrorMessageSchema,
 ])
@@ -59,6 +82,7 @@ export const SyncMessageSchema = z.discriminatedUnion('type', [
 export type HelloMessage = z.infer<typeof HelloMessageSchema>
 export type RequestSyncMessage = z.infer<typeof RequestSyncMessageSchema>
 export type SyncDataMessage = z.infer<typeof SyncDataMessageSchema>
+export type SyncDataChunkMessage = z.infer<typeof SyncDataChunkMessageSchema>
 export type SyncAckMessage = z.infer<typeof SyncAckMessageSchema>
 export type ErrorMessage = z.infer<typeof ErrorMessageSchema>
 export type SyncMessage = z.infer<typeof SyncMessageSchema>
@@ -83,6 +107,16 @@ export function createSyncDataMessage(
   payload: EncryptedPayload,
 ): SyncDataMessage {
   return { type: 'sync-data', groupId, payload }
+}
+
+export function createSyncDataChunkMessage(
+  groupId: string,
+  transferId: string,
+  index: number,
+  total: number,
+  chunk: string,
+): SyncDataChunkMessage {
+  return { type: 'sync-data-chunk', groupId, transferId, index, total, chunk }
 }
 
 export function createSyncAckMessage(
