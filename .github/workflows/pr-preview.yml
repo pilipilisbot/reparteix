@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   deploy-preview:
-    if: github.event.action != 'closed'
+    if: ${{ github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PR code
@@ -161,7 +161,7 @@ jobs:
             }
 
   cleanup-preview:
-    if: github.event.action == 'closed'
+    if: ${{ github.event.action == 'closed' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
