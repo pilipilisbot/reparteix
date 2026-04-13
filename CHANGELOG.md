@@ -1,3 +1,12 @@
+## [1.30.2](https://github.com/reparteix/reparteix/compare/v1.30.1...v1.30.2) (2026-04-13)
+
+
+### Bug Fixes
+
+* chunk large sync payloads ([44d0ac3](https://github.com/reparteix/reparteix/commit/44d0ac39e4ed55012fbe17fd970d8a2d559ebdb5))
+* harden chunked sync transport ([975e90c](https://github.com/reparteix/reparteix/commit/975e90cb7ce48051074b0dd37b0ae4f7f707a234))
+* reduce sync chunk size for JSON channel ([e5c84d7](https://github.com/reparteix/reparteix/commit/e5c84d7a943863f33bd2d331c365a4052eb1e09b))
+
 ## [1.30.1](https://github.com/reparteix/reparteix/compare/v1.30.0...v1.30.1) (2026-04-13)
 
 
