@@ -1,3 +1,10 @@
+## [1.30.1](https://github.com/reparteix/reparteix/compare/v1.30.0...v1.30.1) (2026-04-13)
+
+
+### Bug Fixes
+
+* make preview deploy and cleanup triggers explicit ([9b75735](https://github.com/reparteix/reparteix/commit/9b75735143fdfa64da1aaad1cb8035bcbdc66772))
+
 # [1.30.0](https://github.com/reparteix/reparteix/compare/v1.29.1...v1.30.0) (2026-04-13)
 
 
