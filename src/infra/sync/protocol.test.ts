@@ -8,6 +8,8 @@ import {
   createErrorMessage,
   encodeMessage,
   decodeMessage,
+  MAX_SYNC_DATA_CHUNKS,
+  MAX_SYNC_DATA_CHUNK_LENGTH,
   SYNC_PROTOCOL_VERSION,
 } from './protocol'
 
@@ -148,6 +150,45 @@ describe('sync protocol', () => {
       expect(decodeMessage(42)).toBeNull()
       expect(decodeMessage(null)).toBeNull()
       expect(decodeMessage(undefined)).toBeNull()
+    })
+
+    it('returns null for sync-data-chunk with index out of range', () => {
+      expect(
+        decodeMessage({
+          type: 'sync-data-chunk',
+          groupId: 'group-x',
+          transferId: 'transfer-1',
+          index: 3,
+          total: 3,
+          chunk: 'abc',
+        }),
+      ).toBeNull()
+    })
+
+    it('returns null for sync-data-chunk with too many chunks', () => {
+      expect(
+        decodeMessage({
+          type: 'sync-data-chunk',
+          groupId: 'group-x',
+          transferId: 'transfer-1',
+          index: 0,
+          total: MAX_SYNC_DATA_CHUNKS + 1,
+          chunk: 'abc',
+        }),
+      ).toBeNull()
+    })
+
+    it('returns null for sync-data-chunk with chunk payload too large', () => {
+      expect(
+        decodeMessage({
+          type: 'sync-data-chunk',
+          groupId: 'group-x',
+          transferId: 'transfer-1',
+          index: 0,
+          total: 1,
+          chunk: 'a'.repeat(MAX_SYNC_DATA_CHUNK_LENGTH + 1),
+        }),
+      ).toBeNull()
     })
   })
 })

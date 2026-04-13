@@ -33,14 +33,27 @@ const SyncDataMessageSchema = z.object({
   payload: EncryptedPayloadSchema,
 })
 
-const SyncDataChunkMessageSchema = z.object({
-  type: z.literal('sync-data-chunk'),
-  groupId: z.string(),
-  transferId: z.string(),
-  index: z.number().int().min(0),
-  total: z.number().int().positive(),
-  chunk: z.string(),
-})
+export const MAX_SYNC_DATA_CHUNKS = 1024
+export const MAX_SYNC_DATA_CHUNK_LENGTH = 8_000
+
+const SyncDataChunkMessageSchema = z
+  .object({
+    type: z.literal('sync-data-chunk'),
+    groupId: z.string(),
+    transferId: z.string(),
+    index: z.number().int().min(0),
+    total: z.number().int().positive().max(MAX_SYNC_DATA_CHUNKS),
+    chunk: z.string().min(1).max(MAX_SYNC_DATA_CHUNK_LENGTH),
+  })
+  .superRefine((value, ctx) => {
+    if (value.index >= value.total) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['index'],
+        message: 'Chunk index must be less than total chunks',
+      })
+    }
+  })
 
 const SyncAckMessageSchema = z.object({
   type: z.literal('sync-ack'),
