@@ -1,3 +1,16 @@
+# [1.30.0](https://github.com/reparteix/reparteix/compare/v1.29.1...v1.30.0) (2026-04-13)
+
+
+### Bug Fixes
+
+* handle share cancellation and clipboard feedback ([7dd4e43](https://github.com/reparteix/reparteix/commit/7dd4e437dea5aed221b5c990765b0d7bda1e885c))
+* resolve lint issues in share target flow ([bdf570c](https://github.com/reparteix/reparteix/commit/bdf570c38fb9838cf16e392f00a438cf2e7f7151))
+
+
+### Features
+
+* add native PWA sharing and share target ([d9df068](https://github.com/reparteix/reparteix/commit/d9df0689925e344539f058d3c1158b5e09786cf2))
+
 ## [1.29.1](https://github.com/reparteix/reparteix/compare/v1.29.0...v1.29.1) (2026-04-13)
 
 
