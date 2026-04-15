@@ -1,3 +1,10 @@
+# [1.31.0](https://github.com/reparteix/reparteix/compare/v1.30.2...v1.31.0) (2026-04-15)
+
+
+### Features
+
+* share payment reminders from balances ([#115](https://github.com/reparteix/reparteix/issues/115)) ([bf58a04](https://github.com/reparteix/reparteix/commit/bf58a04275512d16baac84113b5b13bdb0130d12))
+
 ## [1.30.2](https://github.com/reparteix/reparteix/compare/v1.30.1...v1.30.2) (2026-04-13)
 
 
