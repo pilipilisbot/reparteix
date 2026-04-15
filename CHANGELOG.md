@@ -1,3 +1,10 @@
+## [1.31.1](https://github.com/reparteix/reparteix/compare/v1.31.0...v1.31.1) (2026-04-15)
+
+
+### Bug Fixes
+
+* clarify sync transfer progress and interruptions ([3c0816e](https://github.com/reparteix/reparteix/commit/3c0816ee32bd4ae74989da5e9a6af3807646d94c))
+
 # [1.31.0](https://github.com/reparteix/reparteix/compare/v1.30.2...v1.31.0) (2026-04-15)
 
 
