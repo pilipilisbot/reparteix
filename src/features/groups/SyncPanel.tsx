@@ -31,6 +31,7 @@ import type { SyncReport } from '@/domain/services/sync'
 
 interface SyncPanelProps {
   groupId: string
+  embedded?: boolean
 }
 
 /**
@@ -162,7 +163,7 @@ function StateBadge({ state }: { state: string }) {
   return <Badge variant={variants[state] ?? 'secondary'}>{labels[state] ?? state}</Badge>
 }
 
-export function SyncPanel({ groupId }: SyncPanelProps) {
+export function SyncPanel({ groupId, embedded = false }: SyncPanelProps) {
   const group = useStore((state) => state.groups.find((item) => item.id === groupId))
   const updateGroup = useStore((state) => state.updateGroup)
   const rememberedPassphrase = useMemo(
@@ -239,15 +240,8 @@ export function SyncPanel({ groupId }: SyncPanelProps) {
     setTimeout(() => setSharedLinkStatus('idle'), 3000)
   }
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <RefreshCw className="h-4 w-4" />
-          Sincronitzar grup
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+  const content = (
+      <div className={embedded ? 'space-y-4' : 'space-y-4'}>
         {showSetupCopy && (
           <p className="text-sm text-muted-foreground">
             Posa aquest grup al dia entre dispositius amb una sola acció.
@@ -415,7 +409,22 @@ export function SyncPanel({ groupId }: SyncPanelProps) {
             </div>
           </div>
         )}
-      </CardContent>
+      </div>
+  )
+
+  if (embedded) {
+    return content
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <RefreshCw className="h-4 w-4" />
+          Sincronitzar grup
+        </CardTitle>
+      </CardHeader>
+      <CardContent>{content}</CardContent>
     </Card>
   )
 }

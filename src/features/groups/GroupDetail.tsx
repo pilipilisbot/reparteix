@@ -368,7 +368,7 @@ export function GroupDetail() {
             </div>
 
             <Suspense fallback={<p className="text-sm text-muted-foreground">Carregant sincronització…</p>}>
-              <SyncPanel groupId={group.id} />
+              <SyncPanel groupId={group.id} embedded />
             </Suspense>
           </div>
         </div>
