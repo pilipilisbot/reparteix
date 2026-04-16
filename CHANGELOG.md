@@ -1,3 +1,11 @@
+## [1.31.2](https://github.com/reparteix/reparteix/compare/v1.31.1...v1.31.2) (2026-04-16)
+
+
+### Bug Fixes
+
+* avoid false successful PR previews ([d64863e](https://github.com/reparteix/reparteix/commit/d64863e4857fcb7be7217baf5a1610a9ba82413a))
+* wait for staging push before preview signal ([ea417ad](https://github.com/reparteix/reparteix/commit/ea417ad5450deaf173ab14a03265e74c7a051eb2))
+
 ## [1.31.1](https://github.com/reparteix/reparteix/compare/v1.31.0...v1.31.1) (2026-04-15)
 
 
