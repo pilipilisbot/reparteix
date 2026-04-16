@@ -1,3 +1,10 @@
+## [1.31.3](https://github.com/reparteix/reparteix/compare/v1.31.2...v1.31.3) (2026-04-16)
+
+
+### Bug Fixes
+
+* keep group cards aligned with long names on mobile ([#134](https://github.com/reparteix/reparteix/issues/134)) ([7241589](https://github.com/reparteix/reparteix/commit/724158934ecd927bb14f303bdf0acd42c7430517))
+
 ## [1.31.2](https://github.com/reparteix/reparteix/compare/v1.31.1...v1.31.2) (2026-04-16)
 
 
