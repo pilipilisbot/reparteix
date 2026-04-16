@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, X, Pencil, Check, Settings, Archive } from 'lucide-react'
+import { ArrowLeft, Plus, X, Pencil, Check, Settings, Archive, RefreshCw, Smartphone } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -148,6 +148,31 @@ export function GroupDetail() {
         <div className="mb-4 shrink-0 rounded-md bg-muted border border-border px-4 py-2 flex items-center gap-2 text-sm text-muted-foreground">
           <Archive className="h-4 w-4 shrink-0" />
           <span>Aquest grup és de només lectura. Desarxiva'l per poder fer canvis.</span>
+        </div>
+      )}
+
+      {!isArchived && (
+        <div className="mb-4 shrink-0 rounded-xl border border-indigo-200 bg-indigo-50/70 px-4 py-3 dark:border-indigo-900 dark:bg-indigo-950/40">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 text-sm font-medium text-indigo-700 dark:text-indigo-300">
+                <Smartphone className="h-4 w-4" />
+                Continuïtat entre dispositius
+              </div>
+              <p className="mt-1 text-sm text-indigo-950/80 dark:text-indigo-100/80">
+                Si vols posar aquest grup al dia en un altre mòbil o ordinador, ves a <strong>Configuració → Sincronitzar grup</strong> i comparteix l&apos;enllaç de sync.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/group/${groupId}/settings`)}
+              className="shrink-0 border-indigo-300 bg-white/80 text-indigo-700 hover:bg-white dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-200"
+            >
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Sincronitzar
+            </Button>
+          </div>
         </div>
       )}
 
