@@ -170,14 +170,14 @@ export function GroupDetail() {
                 Continuïtat entre dispositius
               </div>
               <p className="mt-1 text-sm text-indigo-950/80 dark:text-indigo-100/80">
-                Posa aquest grup al dia en un altre mòbil o ordinador directament des d&apos;aquí. Si encara no tens contrasenya de grup, la pots definir abans de començar.
+                Posa aquest grup al dia en un altre mòbil o ordinador directament des d&apos;aquí. Si encara no tens contrasenya de grup, la pots definir abans de començar la sincronització.
               </p>
             </div>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowSyncModal(true)}
-              className="shrink-0 border-indigo-300 bg-white/80 text-indigo-700 hover:bg-white dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-200"
+              className="shrink-0 border-indigo-300 bg-white/80 text-indigo-700 hover:bg-white dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-200 dark:hover:bg-indigo-950/80"
             >
               <RefreshCw className="h-4 w-4 mr-1" />
               Obrir sync
