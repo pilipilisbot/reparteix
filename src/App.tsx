@@ -8,6 +8,7 @@ import { useFileHandler } from './hooks/useFileHandler'
 const GroupList = lazy(() => import('./features/groups/GroupList').then((m) => ({ default: m.GroupList })))
 const GroupDetail = lazy(() => import('./features/groups/GroupDetail').then((m) => ({ default: m.GroupDetail })))
 const GroupSettings = lazy(() => import('./features/groups/GroupSettings').then((m) => ({ default: m.GroupSettings })))
+const Preferences = lazy(() => import('./features/groups/Preferences').then((m) => ({ default: m.Preferences })))
 const ImportFromUrl = lazy(() => import('./features/groups/ImportFromUrl').then((m) => ({ default: m.ImportFromUrl })))
 const OnboardingWizard = lazy(() => import('./features/groups/OnboardingWizard').then((m) => ({ default: m.OnboardingWizard })))
 const SyncFromUrl = lazy(() => import('./features/groups/SyncFromUrl').then((m) => ({ default: m.SyncFromUrl })))
@@ -52,6 +53,7 @@ function App() {
             <Route path="/onboarding" element={<OnboardingWizard />} />
             <Route path="/group/:groupId" element={<GroupDetail />} />
             <Route path="/group/:groupId/settings" element={<GroupSettings />} />
+            <Route path="/preferences" element={<Preferences />} />
             <Route path="/import" element={<ImportFromUrl />} />
             <Route path="/import/shared" element={<ShareTargetImport />} />
             <Route path="/sync" element={<SyncFromUrl />} />

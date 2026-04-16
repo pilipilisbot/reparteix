@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../../store'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Trash2, Users, ChevronRight, Upload, Archive, ChevronDown } from 'lucide-react'
+import { Plus, Trash2, Users, ChevronRight, Upload, Archive, ChevronDown, Settings } from 'lucide-react'
 import { ONBOARDING_COMPLETED_KEY } from './OnboardingWizard'
-import { ThemeToggle } from '@/components/ThemeToggle'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -168,14 +167,22 @@ export function GroupList() {
       {/* Hero / Header */}
       <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 dark:from-indigo-800 dark:to-indigo-950 text-white px-4 pt-10 pb-12">
         <div className="max-w-2xl mx-auto">
-          <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between gap-3">
             <div>
               <h1 className="text-4xl font-bold tracking-tight mb-2">🧾 Reparteix</h1>
               <p className="text-indigo-200 text-base">
                 Gestiona despeses compartides de forma senzilla, local i privada.
               </p>
             </div>
-            <ThemeToggle />
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={() => navigate('/preferences')}
+              aria-label="Preferències"
+              className="shrink-0 bg-white/10 text-white hover:bg-white/20 dark:bg-white/10 dark:hover:bg-white/20"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>
