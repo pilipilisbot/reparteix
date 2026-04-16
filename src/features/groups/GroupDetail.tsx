@@ -4,7 +4,6 @@ import { ArrowLeft, Plus, X, Pencil, Check, Settings, Archive, RefreshCw } from 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { ThemeToggle } from '@/components/ThemeToggle'
 import { Badge } from '@/components/ui/badge'
 import { useStore } from '../../store'
 import { ExpenseList } from '../expenses/ExpenseList'
@@ -161,7 +160,6 @@ export function GroupDetail() {
         >
           <Settings className="h-5 w-5" />
         </Button>
-        <ThemeToggle />
       </div>
 
       {/* Archived banner */}
