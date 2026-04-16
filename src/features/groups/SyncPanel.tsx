@@ -32,6 +32,7 @@ import type { SyncReport } from '@/domain/services/sync'
 interface SyncPanelProps {
   groupId: string
   embedded?: boolean
+  onActiveStateChange?: (active: boolean) => void
 }
 
 /**
@@ -163,14 +164,14 @@ function StateBadge({ state }: { state: string }) {
   return (
     <Badge
       variant={variants[state] ?? 'secondary'}
-      className={state === 'waiting-for-peer' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900' : undefined}
+      className={state === 'waiting-for-peer' ? 'bg-success/10 text-success border-success/20 hover:bg-success/10' : undefined}
     >
       {labels[state] ?? state}
     </Badge>
   )
 }
 
-export function SyncPanel({ groupId, embedded = false }: SyncPanelProps) {
+export function SyncPanel({ groupId, embedded = false, onActiveStateChange }: SyncPanelProps) {
   const group = useStore((state) => state.groups.find((item) => item.id === groupId))
   const updateGroup = useStore((state) => state.updateGroup)
   const rememberedPassphrase = useMemo(
@@ -203,6 +204,13 @@ export function SyncPanel({ groupId, embedded = false }: SyncPanelProps) {
   useEffect(() => {
     saveStoredSyncPassphrase(groupId, passphrase)
   }, [groupId, passphrase])
+
+  useEffect(() => {
+    onActiveStateChange?.(isActive)
+    return () => {
+      onActiveStateChange?.(false)
+    }
+  }, [isActive, onActiveStateChange])
 
   const persistPassphrase = async (value: string) => {
     const nextValue = value.trim()
@@ -248,7 +256,7 @@ export function SyncPanel({ groupId, embedded = false }: SyncPanelProps) {
   }
 
   const content = (
-      <div className={embedded ? 'space-y-4' : 'space-y-4'}>
+      <div className="space-y-4">
         {showSetupCopy && (
           <p className="text-sm text-muted-foreground">
             Posa aquest grup al dia entre dispositius amb una sola acció.

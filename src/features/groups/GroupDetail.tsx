@@ -41,6 +41,7 @@ export function GroupDetail() {
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
   const [showSyncModal, setShowSyncModal] = useState(false)
+  const [isSyncClosingLocked, setIsSyncClosingLocked] = useState(false)
   const syncModalRef = useRef<HTMLDivElement>(null)
 
   const group = groups.find((g) => g.id === groupId)
@@ -333,9 +334,13 @@ export function GroupDetail() {
           aria-modal="true"
           aria-label="Sincronitzar grup"
           tabIndex={-1}
-          onClick={() => setShowSyncModal(false)}
+          onClick={() => {
+            if (!isSyncClosingLocked) {
+              setShowSyncModal(false)
+            }
+          }}
           onKeyDown={(e) => {
-            if (e.key === 'Escape') {
+            if (e.key === 'Escape' && !isSyncClosingLocked) {
               setShowSyncModal(false)
             }
           }}
@@ -360,13 +365,14 @@ export function GroupDetail() {
                 size="icon"
                 onClick={() => setShowSyncModal(false)}
                 aria-label="Tancar sincronització"
+                disabled={isSyncClosingLocked}
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
 
             <Suspense fallback={<p className="text-sm text-muted-foreground">Carregant sincronització…</p>}>
-              <SyncPanel groupId={group.id} embedded />
+              <SyncPanel groupId={group.id} embedded onActiveStateChange={setIsSyncClosingLocked} />
             </Suspense>
           </div>
         </div>
