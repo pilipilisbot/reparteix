@@ -94,10 +94,10 @@ export function GroupList() {
       key={group.id}
       className={`hover:shadow-md transition-shadow duration-150 ${group.archived ? 'opacity-70' : ''}`}
     >
-      <div className="flex items-center p-4">
+      <div className="flex items-stretch p-4 gap-2">
         <button
           onClick={() => navigate(`/group/${group.id}`)}
-          className="flex-1 text-left flex items-center gap-3"
+          className="min-w-0 flex-1 text-left flex items-center gap-3"
         >
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-950 text-xl shrink-0">
             {group.icon ? (
@@ -106,37 +106,37 @@ export function GroupList() {
               <Users className="h-5 w-5 text-indigo-400 dark:text-indigo-300" />
             )}
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold truncate">{group.name}</h3>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start gap-2">
+              <h3 className="font-semibold leading-tight break-words line-clamp-2">{group.name}</h3>
               {group.archived && (
                 <Badge variant="outline" className="text-xs text-muted-foreground shrink-0">
                   Arxivat
                 </Badge>
               )}
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground">
               {group.members.filter((m) => !m.deleted).length} membres
             </p>
           </div>
-          <div className="flex flex-col items-end gap-0.5 mr-1">
+          <div className="shrink-0 flex flex-col items-end gap-1 text-right">
             <Badge variant="secondary">{group.currency}</Badge>
             {(groupTotals[group.id] ?? 0) > 0 && (
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-muted-foreground max-w-[88px] break-words">
                 {groupTotals[group.id].toFixed(2)}&nbsp;{group.currency}
               </span>
             )}
           </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground ml-1" />
+          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
         </button>
-        <Separator orientation="vertical" className="mx-2 h-8" />
+        <Separator orientation="vertical" className="h-auto self-stretch" />
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
               aria-label="Eliminar grup"
-              className="text-muted-foreground hover:text-destructive"
+              className="shrink-0 self-center text-muted-foreground hover:text-destructive"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
