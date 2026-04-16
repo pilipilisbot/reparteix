@@ -321,7 +321,7 @@ export function SyncPanel({ groupId, embedded = false }: SyncPanelProps) {
                   variant="ghost"
                   size="sm"
                   onClick={handleCopyPeerId}
-                  className="h-7 text-xs"
+                  className="h-7 px-2 text-xs text-muted-foreground"
                 >
                   {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
                   {copied ? 'Copiat' : 'ID'}
@@ -370,7 +370,6 @@ export function SyncPanel({ groupId, embedded = false }: SyncPanelProps) {
                   Comparteix l'enllaç amb l'altre dispositiu i la sincronització començarà quan l'obrin.
                 </p>
                 <Button
-                  variant="outline"
                   size="sm"
                   onClick={handleCopySyncLink}
                   className="w-full"
