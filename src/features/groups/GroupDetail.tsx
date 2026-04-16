@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, X, Pencil, Check, Settings, Archive, RefreshCw, Smartphone } from 'lucide-react'
+import { ArrowLeft, Plus, X, Pencil, Check, Settings, Archive, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -142,6 +142,17 @@ export function GroupDetail() {
             <p className="text-sm text-muted-foreground truncate">{group.description}</p>
           )}
         </div>
+        {!isArchived && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowSyncModal(true)}
+            className="shrink-0"
+          >
+            <RefreshCw className="h-4 w-4 mr-1" />
+            Sync
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="icon"
@@ -161,30 +172,6 @@ export function GroupDetail() {
         </div>
       )}
 
-      {!isArchived && (
-        <div className="mb-4 shrink-0 rounded-xl border border-indigo-200 bg-indigo-50/70 px-4 py-3 dark:border-indigo-900 dark:bg-indigo-950/40">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 text-sm font-medium text-indigo-700 dark:text-indigo-300">
-                <Smartphone className="h-4 w-4" />
-                Continuïtat entre dispositius
-              </div>
-              <p className="mt-1 text-sm text-indigo-950/80 dark:text-indigo-100/80">
-                Posa aquest grup al dia en un altre mòbil o ordinador directament des d&apos;aquí. Si encara no tens contrasenya de grup, la pots definir abans de començar la sincronització.
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowSyncModal(true)}
-              className="shrink-0 border-indigo-300 bg-white/80 text-indigo-700 hover:bg-white dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-200 dark:hover:bg-indigo-950/80"
-            >
-              <RefreshCw className="h-4 w-4 mr-1" />
-              Obrir sync
-            </Button>
-          </div>
-        </div>
-      )}
 
       {/* Members section */}
       <div className="mb-6 shrink-0">
