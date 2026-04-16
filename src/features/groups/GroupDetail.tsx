@@ -144,13 +144,13 @@ export function GroupDetail() {
         </div>
         {!isArchived && (
           <Button
-            variant="outline"
-            size="sm"
+            variant="ghost"
+            size="icon"
             onClick={() => setShowSyncModal(true)}
-            className="shrink-0"
+            aria-label="Sincronitzar grup"
+            title="Sincronitzar grup"
           >
-            <RefreshCw className="h-4 w-4 mr-1" />
-            Sync
+            <RefreshCw className="h-5 w-5" />
           </Button>
         )}
         <Button
@@ -330,7 +330,7 @@ export function GroupDetail() {
       {showSyncModal && !isArchived && (
         <div
           ref={syncModalRef}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center"
           role="dialog"
           aria-modal="true"
           aria-label="Sincronitzar grup"
@@ -343,9 +343,12 @@ export function GroupDetail() {
           }}
         >
           <div
-            className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl bg-background p-4 shadow-xl"
+            className="w-full max-w-xl max-h-[85vh] overflow-y-auto rounded-t-3xl border bg-background p-4 shadow-xl sm:mb-4 sm:rounded-2xl"
             onClick={(e) => e.stopPropagation()}
           >
+            <div className="mb-3 flex justify-center sm:hidden">
+              <div className="h-1.5 w-12 rounded-full bg-muted-foreground/30" />
+            </div>
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold">Sincronitzar grup</h2>
