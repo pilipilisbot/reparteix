@@ -122,6 +122,13 @@ interface ExpenseListProps {
   group: Group
 }
 
+interface ViewingReceiptState {
+  image: string
+  description: string
+  amount: number
+  payerName: string
+}
+
 export function ExpenseList({ group }: ExpenseListProps) {
   const { expenses, payments, addExpense, updateExpense, deleteExpense, archiveAllSettledExpenses, unarchiveExpense } = useStore()
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null)
@@ -134,7 +141,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
   const [fixedAmounts, setFixedAmounts] = useState<Record<string, string>>({})
   const [showForm, setShowForm] = useState(false)
   const [receiptImage, setReceiptImage] = useState<string | null>(null)
-  const [viewingReceipt, setViewingReceipt] = useState<{ image: string; description: string; amount: number; payerName: string } | null>(null)
+  const [viewingReceipt, setViewingReceipt] = useState<ViewingReceiptState | null>(null)
   const [receiptError, setReceiptError] = useState<string | null>(null)
   const [showArchived, setShowArchived] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -666,7 +673,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
                     </div>
                   )}
                   <div className="space-y-1">
-                    <Label>Foto del tiquet</Label>
+                    <Label>Foto del rebut</Label>
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -686,7 +693,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
                       <div className="relative w-fit space-y-2">
                         <img
                           src={receiptImage}
-                          alt="Tiquet"
+                          alt="Rebut"
                           className="max-h-[200px] rounded-md border object-contain"
                         />
                         <div className="rounded-md border bg-muted/30 px-2 py-1 text-xs text-muted-foreground">
@@ -941,7 +948,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
           role="dialog"
           aria-modal="true"
-          aria-label="Visor del tiquet"
+          aria-label="Visor del rebut"
           tabIndex={-1}
           onClick={() => setViewingReceipt(null)}
           onKeyDown={(e) => {
@@ -956,7 +963,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
           >
             <img
               src={viewingReceipt.image}
-              alt="Tiquet"
+              alt="Rebut"
               className="max-w-full max-h-[85vh] rounded-lg object-contain shadow-lg"
             />
             <div className="absolute left-2 top-2 max-w-[70vw] rounded-lg bg-card/95 px-3 py-2 shadow">
