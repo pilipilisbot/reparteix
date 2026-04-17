@@ -695,6 +695,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
                         <button
                           type="button"
                           onClick={() => {
+                            receiptLoadRequestRef.current += 1
                             setReceiptImage(null)
                             setReceiptError(null)
                           }}
