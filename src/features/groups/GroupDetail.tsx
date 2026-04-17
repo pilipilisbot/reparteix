@@ -365,7 +365,6 @@ export function GroupDetail() {
                 size="icon"
                 onClick={() => setShowSyncModal(false)}
                 aria-label="Tancar sincronització"
-                disabled={isSyncClosingLocked}
               >
                 <X className="h-4 w-4" />
               </Button>
