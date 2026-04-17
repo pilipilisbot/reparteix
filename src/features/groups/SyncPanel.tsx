@@ -11,6 +11,9 @@ import {
   Eye,
   EyeOff,
   Link2,
+  ShieldCheck,
+  Smartphone,
+  ArrowRight,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -171,6 +174,50 @@ function StateBadge({ state }: { state: string }) {
   )
 }
 
+function SyncStepList({ state }: { state: string }) {
+  const steps = [
+    {
+      key: 'prepare',
+      title: 'Prepara l\'altre dispositiu',
+      description: 'Obrirà un enllaç i entrarà directament al flux de sync d\'aquest grup.',
+      active: state === 'idle' || state === 'waiting-for-peer',
+      done: state !== 'idle',
+    },
+    {
+      key: 'connect',
+      title: 'Connexió privada entre dispositius',
+      description: 'Els dos dispositius es troben i estableixen la connexió de sync.',
+      active: state === 'connecting' || state === 'waiting-for-peer',
+      done: state === 'syncing' || state === 'completed',
+    },
+    {
+      key: 'finish',
+      title: 'Intercanvi i actualització de dades',
+      description: 'Reparteix envia només les dades del grup i després et mostra el resultat.',
+      active: state === 'syncing',
+      done: state === 'completed',
+    },
+  ]
+
+  return (
+    <div className="space-y-2">
+      {steps.map((step, index) => (
+        <div key={step.key} className="flex items-start gap-3 rounded-xl bg-muted/40 px-3 py-3">
+          <div className="mt-0.5 flex items-center gap-2">
+            <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${step.done ? 'bg-success/15 text-success' : step.active ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'}`}>
+              {step.done ? <Check className="h-3.5 w-3.5" /> : index + 1}
+            </div>
+          </div>
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium">{step.title}</p>
+            <p className="text-xs leading-5 text-muted-foreground">{step.description}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function SyncPanel({ groupId, embedded = false, onActiveStateChange }: SyncPanelProps) {
   const group = useStore((state) => state.groups.find((item) => item.id === groupId))
   const updateGroup = useStore((state) => state.updateGroup)
@@ -196,6 +243,7 @@ export function SyncPanel({ groupId, embedded = false, onActiveStateChange }: Sy
   const canStart = passphrase.length >= 4
   const showSetupCopy = sync.state === 'idle'
   const showCompactStatusDetails = sync.state !== 'idle' && !sync.error
+  const isWaitingForPeer = mode === 'host' && sync.state === 'waiting-for-peer'
 
   useEffect(() => {
     setPassphrase(rememberedPassphrase)
@@ -256,13 +304,32 @@ export function SyncPanel({ groupId, embedded = false, onActiveStateChange }: Sy
   }
 
   const content = (
-      <div className="space-y-4">
-        {showSetupCopy && (
-          <p className="text-sm text-muted-foreground">
-            Posa aquest grup al dia entre dispositius amb una sola acció.
-            Si l'altre dispositiu és a punt, la sincronització començarà automàticament.
-          </p>
-        )}
+    <div className="space-y-4">
+      {showSetupCopy && (
+        <div className="space-y-4 rounded-2xl border bg-muted/20 p-4">
+          <div className="flex items-start gap-3">
+            <div className="rounded-full bg-primary/10 p-2 text-primary">
+              <Smartphone className="h-4 w-4" />
+            </div>
+            <div className="space-y-1">
+              <p className="font-medium">Sincronitza aquest grup amb un altre dispositiu</p>
+              <p className="text-sm text-muted-foreground">
+                Ideal si vols continuar el mateix grup al mòbil, tauleta o un altre navegador sense exportar ni importar fitxers manualment.
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-xl border bg-background p-3 text-sm text-muted-foreground">
+            <div className="mb-2 flex items-center gap-2 text-foreground">
+              <ShieldCheck className="h-4 w-4 text-success" />
+              <span className="font-medium">Privat per disseny</span>
+            </div>
+            <p>
+              L'enllaç només serveix per connectar els dos dispositius. Les dades del grup viatgen protegides amb la contrasenya del grup.
+            </p>
+          </div>
+        </div>
+      )}
 
         {/* Passphrase input */}
         <div className="space-y-1.5">
@@ -315,6 +382,8 @@ export function SyncPanel({ groupId, embedded = false, onActiveStateChange }: Sy
           </Button>
         )}
 
+        {showSetupCopy && <SyncStepList state={sync.state} />}
+
         {/* Active sync status */}
         {sync.state !== 'idle' && (
           <div className="space-y-3">
@@ -338,8 +407,9 @@ export function SyncPanel({ groupId, embedded = false, onActiveStateChange }: Sy
             </div>
 
             {/* Status message */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               <p className="text-sm font-medium leading-snug">{sync.message}</p>
+              <SyncStepList state={sync.state} />
               {sync.error && (
                 <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                   <div className="flex items-start gap-2">
@@ -349,6 +419,15 @@ export function SyncPanel({ groupId, embedded = false, onActiveStateChange }: Sy
                       <p>{sync.error}</p>
                     </div>
                   </div>
+                </div>
+              )}
+              {isWaitingForPeer && (
+                <div className="rounded-xl border bg-primary/5 p-3 text-sm text-muted-foreground">
+                  <div className="mb-1 flex items-center gap-2 font-medium text-foreground">
+                    <ArrowRight className="h-4 w-4 text-primary" />
+                    Què ha de fer l'altre dispositiu ara?
+                  </div>
+                  <p>Obrir l'enllaç compartit, comprovar la mateixa contrasenya del grup i esperar que la connexió es completi.</p>
                 </div>
               )}
               {showCompactStatusDetails && (sync.remotePeerIds.length > 0 || sync.lastAttemptAt || sync.lastSuccessAt) && (
@@ -406,7 +485,7 @@ export function SyncPanel({ groupId, embedded = false, onActiveStateChange }: Sy
                   {sync.state === 'completed' && (
                     <Button onClick={handleDone} className="flex-1">
                       <CheckCircle2 className="h-4 w-4 mr-2" />
-                      Fet
+                      Tancar
                     </Button>
                   )}
                   <Button variant="outline" onClick={handleReset} className={sync.state === 'error' ? 'flex-1' : ''}>
