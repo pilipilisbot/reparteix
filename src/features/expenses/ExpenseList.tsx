@@ -309,7 +309,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
   return (
     <div>
       {activeMembers.length < 2 ? (
-        <Card className="border-dashed bg-muted/20 shadow-none">
+        <Card className="mb-5 border-dashed bg-muted/20 shadow-none">
           <CardContent className="py-7 px-5 text-center space-y-4">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-background shadow-sm">
               <Users className="h-5 w-5 text-muted-foreground" />
@@ -652,7 +652,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
             No hi ha despeses arxivades.
           </p>
         ) : (
-          <Card className="overflow-hidden border-0 bg-gradient-to-b from-primary/5 via-background to-background shadow-sm">
+          <Card className="mt-5 overflow-hidden border-0 bg-gradient-to-b from-primary/5 via-background to-background shadow-sm">
             <CardContent className="space-y-6 px-5 py-7 sm:px-6">
               <div className="space-y-4 text-center">
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
