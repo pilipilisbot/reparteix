@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Plus, Trash2, Camera, ImagePlus, X, Archive, ArchiveRestore, Pencil, Sparkles, Users, ArrowRight, ReceiptText, Expand } from 'lucide-react'
+import { Plus, Trash2, Camera, ImagePlus, X, Archive, ArchiveRestore, Pencil, Sparkles, Users, ArrowRight } from 'lucide-react'
 import type { Group, Expense } from '../../domain/entities'
 import { computeExpenseShares, calculateBalances, isExpenseArchivable } from '../../domain/services/balances'
 import { useStore } from '../../store'
@@ -822,15 +822,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
                     <Card key={expense.id} className={cn(showArchived && 'opacity-75')}>
                       <CardContent className="flex items-center justify-between p-3">
                         <div className="flex-1 space-y-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <div className="font-medium">{expense.description}</div>
-                            {expense.receiptImage && (
-                              <span className="inline-flex items-center gap-1 rounded-full border bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                                <ReceiptText className="h-3 w-3" />
-                                Amb rebut
-                              </span>
-                            )}
-                          </div>
+                          <div className="font-medium">{expense.description}</div>
                           <div className="text-sm text-muted-foreground flex items-center gap-1.5">
                             <span
                               className="inline-block h-2 w-2 rounded-full shrink-0"
@@ -848,9 +840,8 @@ export function ExpenseList({ group }: ExpenseListProps) {
                           </div>
                           <div className="flex items-center gap-1">
                             {expense.receiptImage && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
+                              <button
+                                type="button"
                                 onClick={() => setViewingReceipt({
                                   image: expense.receiptImage ?? '',
                                   description: expense.description,
@@ -858,11 +849,15 @@ export function ExpenseList({ group }: ExpenseListProps) {
                                   payerName: getMemberName(expense.payerId),
                                 })}
                                 aria-label="Veure rebut"
-                                className="h-auto px-1.5 py-0 text-xs text-muted-foreground hover:text-foreground"
+                                className="overflow-hidden rounded-md border bg-background hover:opacity-90 transition-opacity"
+                                title="Veure rebut"
                               >
-                                <Expand className="mr-1 h-3 w-3" />
-                                Rebut
-                              </Button>
+                                <img
+                                  src={expense.receiptImage}
+                                  alt={`Rebut de ${expense.description}`}
+                                  className="h-8 w-8 object-cover"
+                                />
+                              </button>
                             )}
                             {!showArchived && !group.archived && (
                               <Button
