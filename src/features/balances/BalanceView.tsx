@@ -66,6 +66,26 @@ export function BalanceView({ group }: BalanceViewProps) {
     return `Hola ${debtor}! Et toca pagar ${amount.toFixed(2)} ${symbol} a ${creditor} del grup "${group.name}" a Reparteix.`
   }
 
+  const buildSettlementSummaryMessage = () => {
+    if (netting.minimized.length === 0) {
+      return `Grup "${group.name}": ara mateix no hi ha cap pagament pendent. Tot està equilibrat.`
+    }
+
+    const lines = netting.minimized.map((settlement) => {
+      const debtor = getMemberName(settlement.fromId)
+      const creditor = getMemberName(settlement.toId)
+      return `• ${debtor} ha de pagar ${settlement.amount.toFixed(2)} ${symbol} a ${creditor}`
+    })
+
+    return [
+      `Liquidació pendent del grup "${group.name}":`,
+      '',
+      ...lines,
+      '',
+      `Total a liquidar: ${totalToSettle.toFixed(2)} ${symbol}`,
+    ].join('\n')
+  }
+
   const handleShareReminder = async (fromId: string, toId: string, amount: number, index: number) => {
     const result = await shareText({
       title: `Recordatori de pagament · ${group.name}`,
@@ -74,6 +94,13 @@ export function BalanceView({ group }: BalanceViewProps) {
     if (result.method === 'cancelled') return
     setSharedIndex(index)
     setTimeout(() => setSharedIndex(null), 2000)
+  }
+
+  const handleShareSettlementSummary = async () => {
+    await shareText({
+      title: `Liquidació del grup · ${group.name}`,
+      text: buildSettlementSummaryMessage(),
+    })
   }
 
   return (
@@ -150,32 +177,41 @@ export function BalanceView({ group }: BalanceViewProps) {
         </div>
 
         {netting.minimized.length > 0 && (
-          <div className="grid gap-3 sm:grid-cols-3">
-            <Card>
-              <CardContent className="p-4 space-y-1">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Pagaments</p>
-                <p className="text-2xl font-semibold">{netting.minimized.length}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 space-y-1">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Persones que paguen</p>
-                <p className="text-2xl font-semibold">{peopleToPay}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 space-y-1">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Persones que cobren</p>
-                <p className="text-2xl font-semibold">{peopleToReceive}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 space-y-1">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Import total</p>
-                <p className="text-2xl font-semibold">{totalToSettle.toFixed(2)} {symbol}</p>
-              </CardContent>
-            </Card>
-          </div>
+          <>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardContent className="p-4 space-y-1">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Pagaments</p>
+                  <p className="text-2xl font-semibold">{netting.minimized.length}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4 space-y-1">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Persones que paguen</p>
+                  <p className="text-2xl font-semibold">{peopleToPay}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4 space-y-1">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Persones que cobren</p>
+                  <p className="text-2xl font-semibold">{peopleToReceive}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4 space-y-1">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Import total</p>
+                  <p className="text-2xl font-semibold">{totalToSettle.toFixed(2)} {symbol}</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" onClick={handleShareSettlementSummary}>
+                <Share2 className="h-4 w-4" />
+                Compartir liquidació completa
+              </Button>
+            </div>
+          </>
         )}
       </div>
 
