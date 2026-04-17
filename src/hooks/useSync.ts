@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { createSyncSession, type SyncSessionStatus, type SyncSessionState } from '../infra/sync/sync-session'
 import type { SyncConfigOverrides } from '../infra/sync/config'
 import type { SyncReport } from '../domain/services/sync'
+import { loadSyncConfigOverrides } from '../lib/sync-preferences'
 
 export interface UseSyncOptions {
   groupId: string
@@ -81,7 +82,17 @@ export function useSync({
 
   const ensureSession = useCallback(() => {
     if (!sessionRef.current) {
-      const session = createSyncSession(groupId, passphrase, configOverrides)
+      const storedConfig = loadSyncConfigOverrides()
+      const effectiveConfig = configOverrides ? {
+        ...storedConfig,
+        ...configOverrides,
+        peerJs: {
+          ...storedConfig.peerJs,
+          ...configOverrides.peerJs,
+        },
+        iceServers: configOverrides.iceServers ?? storedConfig.iceServers,
+      } : storedConfig
+      const session = createSyncSession(groupId, passphrase, effectiveConfig)
       session.subscribe(setStatus)
       sessionRef.current = session
     }
