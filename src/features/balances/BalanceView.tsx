@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowRight, Check, Share2 } from 'lucide-react'
+import { ArrowRight, Check, Share2, Sparkles, Wallet, CircleAlert } from 'lucide-react'
 import type { Group } from '../../domain/entities'
 import { useStore } from '../../store'
 import {
@@ -41,6 +41,12 @@ export function BalanceView({ group }: BalanceViewProps) {
   const totalExpenses = expenses
     .filter((e) => !e.deleted)
     .reduce((sum, e) => sum + e.amount, 0)
+
+  const totalToSettle = netting.minimized.reduce((sum, settlement) => sum + settlement.amount, 0)
+
+  const peopleToPay = new Set(netting.minimized.map((settlement) => settlement.fromId)).size
+
+  const peopleToReceive = new Set(netting.minimized.map((settlement) => settlement.toId)).size
 
   const handleRecordPayment = async (fromId: string, toId: string, amount: number, index: number) => {
     await addPayment({
@@ -124,29 +130,93 @@ export function BalanceView({ group }: BalanceViewProps) {
       <Separator className="my-6" />
 
       {/* Settlements */}
-      <h3 className="font-semibold mb-3">Transferències suggerides</h3>
+      <div className="mb-4 space-y-3">
+        <div className="flex items-start gap-3 rounded-2xl border bg-amber-50/70 p-4 dark:border-amber-900 dark:bg-amber-950/40">
+          <div className="rounded-full bg-amber-100 p-2 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300">
+            <Wallet className="h-4 w-4" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="font-semibold">Liquidació suggerida</h3>
+            {netting.minimized.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Tot està equilibrat. No cal fer cap pagament ara mateix.
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Reparteix ha simplificat els saldos a {netting.minimized.length} pagament{netting.minimized.length === 1 ? '' : 's'} perquè liquidar sigui més ràpid i menys incòmode.
+              </p>
+            )}
+          </div>
+        </div>
+
+        {netting.minimized.length > 0 && (
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Card>
+              <CardContent className="p-4 space-y-1">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Pagaments</p>
+                <p className="text-2xl font-semibold">{netting.minimized.length}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 space-y-1">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Persones que paguen</p>
+                <p className="text-2xl font-semibold">{peopleToPay}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 space-y-1">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Persones que cobren</p>
+                <p className="text-2xl font-semibold">{peopleToReceive}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 space-y-1">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Import total</p>
+                <p className="text-2xl font-semibold">{totalToSettle.toFixed(2)} {symbol}</p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
+
       {netting.minimized.length === 0 ? (
-        <p className="text-muted-foreground text-center py-4">
-          Tot està equilibrat! 🎉
-        </p>
+        <Card className="border-emerald-100 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950">
+          <CardContent className="flex items-center justify-center gap-2 p-4 text-emerald-700 dark:text-emerald-300">
+            <Sparkles className="h-4 w-4" />
+            <span className="font-medium">Tot està equilibrat! 🎉</span>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {netting.minimized.map((s, i) => (
             <Card key={i} className="border-amber-100 dark:border-amber-900 bg-amber-50 dark:bg-amber-950">
-              <CardContent className="flex items-center justify-between p-3">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-medium">{getMemberName(s.fromId)}</span>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">{getMemberName(s.toId)}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 font-semibold">
+              <CardContent className="space-y-4 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <CircleAlert className="h-4 w-4" />
+                      Acció suggerida
+                    </div>
+                    <div className="flex items-center gap-2 text-base sm:text-lg">
+                      <span className="font-semibold">{getMemberName(s.fromId)}</span>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-semibold">{getMemberName(s.toId)}</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {getMemberName(s.fromId)} hauria de pagar <span className="font-medium text-foreground">{s.amount.toFixed(2)} {symbol}</span> a {getMemberName(s.toId)}.
+                    </p>
+                  </div>
+
+                  <Badge variant="outline" className="w-fit border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 font-semibold text-sm px-3 py-1">
                     {s.amount.toFixed(2)} {symbol}
                   </Badge>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
                   {sharedIndex === i ? (
-                    <span className="flex items-center gap-1 px-2 py-1 text-xs text-indigo-600 dark:text-indigo-400 font-medium">
+                    <span className="flex items-center gap-1 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-medium text-indigo-600 dark:border-indigo-900 dark:bg-indigo-950 dark:text-indigo-300">
                       <Check className="h-3 w-3" />
-                      Compartit!
+                      Recordatori compartit
                     </span>
                   ) : (
                     <Button
@@ -154,26 +224,26 @@ export function BalanceView({ group }: BalanceViewProps) {
                       variant="outline"
                       onClick={() => handleShareReminder(s.fromId, s.toId, s.amount, i)}
                       title="Compartir recordatori de pagament"
-                      className="text-xs h-7"
+                      className="h-9"
                     >
-                      <Share2 className="h-3 w-3" />
-                      Compartir
+                      <Share2 className="h-4 w-4" />
+                      Compartir recordatori
                     </Button>
                   )}
                   {recordedIndex === i ? (
-                    <span className="flex items-center gap-1 px-2 py-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                    <span className="flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-600 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-300">
                       <Check className="h-3 w-3" />
-                      Fet!
+                      Pagament registrat
                     </span>
                   ) : (
                     <Button
                       size="sm"
                       onClick={() => handleRecordPayment(s.fromId, s.toId, s.amount, i)}
                       title="Registrar aquest pagament"
-                      className="bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-xs h-7"
+                      className="h-9 bg-emerald-600 text-xs hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500"
                     >
-                      <Check className="h-3 w-3" />
-                      Pagar
+                      <Check className="h-4 w-4" />
+                      Marcar com pagat
                     </Button>
                   )}
                 </div>
