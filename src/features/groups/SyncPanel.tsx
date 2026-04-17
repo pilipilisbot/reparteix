@@ -453,14 +453,21 @@ export function SyncPanel({ groupId, embedded = false, onActiveStateChange }: Sy
 
             {/* Instructions for host + share link */}
             {mode === 'host' && sync.state === 'waiting-for-peer' && (
-              <div className="rounded-lg border bg-muted/40 p-3 text-sm space-y-2">
-                <p className="text-muted-foreground">
-                  {embedded
-                    ? 'Comparteix l’enllaç i l’altre dispositiu entrarà directament al sync.'
-                    : 'Comparteix l\'enllaç amb l\'altre dispositiu i la sincronització començarà quan l\'obrin.'}
-                </p>
+              <div className={`rounded-xl border p-3 ${embedded ? 'bg-primary/5 border-primary/20 space-y-3' : 'bg-muted/40 space-y-2 text-sm'}`}>
+                <div className="space-y-1">
+                  <p className={`${embedded ? 'text-sm font-medium text-foreground' : 'text-muted-foreground'}`}>
+                    {embedded
+                      ? 'Comparteix l’enllaç perquè l’altre dispositiu entri directament a la sincronització.'
+                      : 'Comparteix l\'enllaç amb l\'altre dispositiu i la sincronització començarà quan l\'obrin.'}
+                  </p>
+                  {embedded && (
+                    <p className="text-xs text-muted-foreground">
+                      Aquesta és l’acció principal ara mateix.
+                    </p>
+                  )}
+                </div>
                 <Button
-                  size="sm"
+                  size={embedded ? 'default' : 'sm'}
                   onClick={handleCopySyncLink}
                   className="w-full"
                 >
