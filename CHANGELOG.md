@@ -1,3 +1,16 @@
+# [1.38.0](https://github.com/reparteix/reparteix/compare/v1.37.0...v1.38.0) (2026-04-17)
+
+
+### Bug Fixes
+
+* align receipt naming and state type ([f3ef1b0](https://github.com/reparteix/reparteix/commit/f3ef1b0717f151ea9da3bddb9cbbc2905c1ddbd7))
+* cancel stale receipt loads on remove ([7a5ee47](https://github.com/reparteix/reparteix/commit/7a5ee4700bd2125936d5673bb0ad75fb06704ae6))
+
+
+### Features
+
+* make receipts more visible and contextual ([e2540bd](https://github.com/reparteix/reparteix/commit/e2540bdd8caaad77f2d98cabba5268d1c7571ebf))
+
 # [1.37.0](https://github.com/reparteix/reparteix/compare/v1.36.0...v1.37.0) (2026-04-17)
 
 
