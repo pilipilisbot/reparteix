@@ -177,41 +177,35 @@ export function BalanceView({ group }: BalanceViewProps) {
         </div>
 
         {netting.minimized.length > 0 && (
-          <>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardContent className="p-4 space-y-1">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Pagaments</p>
-                  <p className="text-2xl font-semibold">{netting.minimized.length}</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4 space-y-1">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Persones que paguen</p>
-                  <p className="text-2xl font-semibold">{peopleToPay}</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4 space-y-1">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Persones que cobren</p>
-                  <p className="text-2xl font-semibold">{peopleToReceive}</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4 space-y-1">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Import total</p>
-                  <p className="text-2xl font-semibold">{totalToSettle.toFixed(2)} {symbol}</p>
-                </CardContent>
-              </Card>
-            </div>
+          <Card>
+            <CardContent className="p-4 space-y-4">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="rounded-xl bg-muted/40 px-3 py-3">
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Pagaments</p>
+                  <p className="mt-1 text-xl font-semibold">{netting.minimized.length}</p>
+                </div>
+                <div className="rounded-xl bg-muted/40 px-3 py-3">
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Paguen</p>
+                  <p className="mt-1 text-xl font-semibold">{peopleToPay}</p>
+                </div>
+                <div className="rounded-xl bg-muted/40 px-3 py-3">
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Cobren</p>
+                  <p className="mt-1 text-xl font-semibold">{peopleToReceive}</p>
+                </div>
+                <div className="rounded-xl bg-muted/40 px-3 py-3">
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Total</p>
+                  <p className="mt-1 text-xl font-semibold">{totalToSettle.toFixed(2)} {symbol}</p>
+                </div>
+              </div>
 
-            <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="outline" onClick={handleShareSettlementSummary}>
-                <Share2 className="h-4 w-4" />
-                Compartir liquidació completa
-              </Button>
-            </div>
-          </>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" onClick={handleShareSettlementSummary}>
+                  <Share2 className="h-4 w-4" />
+                  Compartir liquidació completa
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         )}
       </div>
 
