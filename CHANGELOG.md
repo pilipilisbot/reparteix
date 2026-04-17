@@ -1,3 +1,10 @@
+# [1.35.0](https://github.com/reparteix/reparteix/compare/v1.34.0...v1.35.0) (2026-04-17)
+
+
+### Features
+
+* improve settlement action flow in balances view ([#138](https://github.com/reparteix/reparteix/issues/138)) ([8791d0b](https://github.com/reparteix/reparteix/commit/8791d0b227f6be9240b48d35a7d93f7793ad191a))
+
 # [1.34.0](https://github.com/reparteix/reparteix/compare/v1.33.0...v1.34.0) (2026-04-17)
 
 
