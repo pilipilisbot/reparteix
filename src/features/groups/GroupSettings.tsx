@@ -218,10 +218,10 @@ function GroupSettingsForm({ group, groupId }: GroupSettingsFormProps) {
             </p>
           </div>
 
-          <div className="space-y-3">
-            <div className="rounded-xl border p-4 space-y-3">
+          <ol className="space-y-3">
+            <li className="rounded-xl border p-4 space-y-3">
               <div>
-                <p className="font-medium">1. Sincronitzar ara entre dos dispositius</p>
+                <h3 className="font-medium">1. Sincronitzar ara entre dos dispositius</h3>
                 <p className="text-sm text-muted-foreground">
                   Ideal si vols continuar el mateix grup immediatament al teu mòbil, tauleta o un altre navegador.
                 </p>
@@ -229,11 +229,11 @@ function GroupSettingsForm({ group, groupId }: GroupSettingsFormProps) {
               <Suspense fallback={<p className="text-sm text-muted-foreground">Carregant sincronització…</p>}>
                 <SyncPanel groupId={groupId} />
               </Suspense>
-            </div>
+            </li>
 
-            <div className="rounded-xl border p-4 space-y-3">
+            <li className="rounded-xl border p-4 space-y-3">
               <div>
-                <p className="font-medium">2. Compartir el grup amb una altra persona</p>
+                <h3 className="font-medium">2. Compartir el grup amb una altra persona</h3>
                 <p className="text-sm text-muted-foreground">
                   Genera un enllaç perquè una altra persona el pugui obrir, revisar i importar al seu dispositiu.
                 </p>
@@ -256,11 +256,11 @@ function GroupSettingsForm({ group, groupId }: GroupSettingsFormProps) {
               {shareStatus === 'error' && (
                 <p className="text-sm text-destructive">Error en generar l'enllaç. Torna-ho a intentar.</p>
               )}
-            </div>
+            </li>
 
-            <div className="rounded-xl border p-4 space-y-3">
+            <li className="rounded-xl border p-4 space-y-3">
               <div>
-                <p className="font-medium">3. Guardar una còpia de seguretat</p>
+                <h3 className="font-medium">3. Guardar una còpia de seguretat</h3>
                 <p className="text-sm text-muted-foreground">
                   Exporta el grup a un fitxer per tenir-ne una còpia, moure'l manualment o recuperar-lo més endavant.
                 </p>
@@ -280,8 +280,8 @@ function GroupSettingsForm({ group, groupId }: GroupSettingsFormProps) {
               {exportStatus === 'error' && (
                 <p className="text-sm text-destructive">Error en exportar. Torna-ho a intentar.</p>
               )}
-            </div>
-          </div>
+            </li>
+          </ol>
         </CardContent>
       </Card>
 
