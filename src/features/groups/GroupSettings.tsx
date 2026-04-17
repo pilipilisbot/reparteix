@@ -208,66 +208,82 @@ function GroupSettingsForm({ group, groupId }: GroupSettingsFormProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Còpia de seguretat</CardTitle>
+          <CardTitle className="text-base">Continuïtat entre dispositius</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2">
-          <p className="text-sm text-muted-foreground">
-            Exporta totes les dades del grup (membres, despeses i pagaments) a un fitxer JSON per fer-ne una còpia de seguretat o migrar-les.
-          </p>
-          <Button
-            variant="outline"
-            className="w-full"
-            type="button"
-            onClick={handleExport}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Exportar JSON
-          </Button>
-          {exportStatus === 'ok' && (
-            <p className="text-sm text-success">Fitxer exportat correctament.</p>
-          )}
-          {exportStatus === 'error' && (
-            <p className="text-sm text-destructive">Error en exportar. Torna-ho a intentar.</p>
-          )}
+        <CardContent className="space-y-5">
+          <div className="rounded-xl border bg-muted/20 p-4 space-y-2">
+            <p className="text-sm font-medium">Porta aquest grup on el necessitis</p>
+            <p className="text-sm text-muted-foreground">
+              Pots continuar el grup en un altre dispositiu, compartir-lo amb una altra persona o guardar-ne una còpia de seguretat. Tria el camí segons el que vulguis fer ara.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <div className="rounded-xl border p-4 space-y-3">
+              <div>
+                <p className="font-medium">1. Sincronitzar ara entre dos dispositius</p>
+                <p className="text-sm text-muted-foreground">
+                  Ideal si vols continuar el mateix grup immediatament al teu mòbil, tauleta o un altre navegador.
+                </p>
+              </div>
+              <Suspense fallback={<p className="text-sm text-muted-foreground">Carregant sincronització…</p>}>
+                <SyncPanel groupId={groupId} />
+              </Suspense>
+            </div>
+
+            <div className="rounded-xl border p-4 space-y-3">
+              <div>
+                <p className="font-medium">2. Compartir el grup amb una altra persona</p>
+                <p className="text-sm text-muted-foreground">
+                  Genera un enllaç perquè una altra persona el pugui obrir, revisar i importar al seu dispositiu.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                className="w-full"
+                type="button"
+                onClick={handleShare}
+              >
+                <Share2 className="h-4 w-4 mr-2" />
+                Compartir grup per enllaç
+              </Button>
+              {shareStatus === 'shared' && (
+                <p className="text-sm text-success">Enllaç compartit correctament.</p>
+              )}
+              {shareStatus === 'copied' && (
+                <p className="text-sm text-success">Enllaç copiat al porta-retalls.</p>
+              )}
+              {shareStatus === 'error' && (
+                <p className="text-sm text-destructive">Error en generar l'enllaç. Torna-ho a intentar.</p>
+              )}
+            </div>
+
+            <div className="rounded-xl border p-4 space-y-3">
+              <div>
+                <p className="font-medium">3. Guardar una còpia de seguretat</p>
+                <p className="text-sm text-muted-foreground">
+                  Exporta el grup a un fitxer per tenir-ne una còpia, moure'l manualment o recuperar-lo més endavant.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                className="w-full"
+                type="button"
+                onClick={handleExport}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Exportar còpia del grup
+              </Button>
+              {exportStatus === 'ok' && (
+                <p className="text-sm text-success">Fitxer exportat correctament.</p>
+              )}
+              {exportStatus === 'error' && (
+                <p className="text-sm text-destructive">Error en exportar. Torna-ho a intentar.</p>
+              )}
+            </div>
+          </div>
         </CardContent>
       </Card>
-
-      <Separator className="my-8" />
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Compartir per enllaç</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <p className="text-sm text-muted-foreground">
-            Genera un enllaç per compartir el grup amb una altra persona. L'altra persona podrà previsualitzar i importar-lo al seu dispositiu.
-          </p>
-          <Button
-            variant="outline"
-            className="w-full"
-            type="button"
-            onClick={handleShare}
-          >
-            <Share2 className="h-4 w-4 mr-2" />
-            Compartir grup
-          </Button>
-          {shareStatus === 'shared' && (
-            <p className="text-sm text-success">Enllaç compartit correctament.</p>
-          )}
-          {shareStatus === 'copied' && (
-            <p className="text-sm text-success">Enllaç copiat al porta-retalls.</p>
-          )}
-          {shareStatus === 'error' && (
-            <p className="text-sm text-destructive">Error en generar l'enllaç. Torna-ho a intentar.</p>
-          )}
-        </CardContent>
-      </Card>
-
-      <Separator className="my-8" />
-
-      <Suspense fallback={<p className="text-sm text-muted-foreground">Carregant sincronització…</p>}>
-        <SyncPanel groupId={groupId} />
-      </Suspense>
 
       <Separator className="my-8" />
 
