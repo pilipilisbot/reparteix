@@ -309,9 +309,14 @@ export function ExpenseList({ group }: ExpenseListProps) {
   return (
     <div>
       {activeMembers.length < 2 ? (
-        <p className="text-muted-foreground text-center py-4">
-          Afegeix almenys 2 membres per poder crear despeses.
-        </p>
+        <Card className="border-dashed">
+          <CardContent className="py-6 text-center space-y-3">
+            <p className="font-medium">Falta com a mínim una altra persona</p>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              Per començar a repartir despeses necessites almenys 2 membres al grup. Afegeix algú més i després ja podràs registrar la primera despesa.
+            </p>
+          </CardContent>
+        </Card>
       ) : (
         <>
           {!showForm ? (
@@ -637,9 +642,39 @@ export function ExpenseList({ group }: ExpenseListProps) {
       )}
 
       {visibleExpenses.length === 0 ? (
-        <p className="text-muted-foreground text-center py-4">
-          {showArchived ? 'No hi ha despeses arxivades.' : 'Encara no hi ha despeses.'}
-        </p>
+        showArchived ? (
+          <p className="text-muted-foreground text-center py-4">
+            No hi ha despeses arxivades.
+          </p>
+        ) : (
+          <Card className="border-dashed bg-muted/20">
+            <CardContent className="py-6 space-y-4">
+              <div className="space-y-2 text-center">
+                <p className="font-medium">Aquest grup encara està buit</p>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  El primer valor arriba quan afegiu les primeres despeses reals. Comença amb alguna cosa simple, com un sopar, una compra compartida o un pagament del pis.
+                </p>
+              </div>
+
+              <div className="grid gap-2 sm:grid-cols-3">
+                <Button type="button" variant="outline" onClick={startCreate} disabled={group.archived}>
+                  Sopar
+                </Button>
+                <Button type="button" variant="outline" onClick={startCreate} disabled={group.archived}>
+                  Compra
+                </Button>
+                <Button type="button" variant="outline" onClick={startCreate} disabled={group.archived}>
+                  Transport
+                </Button>
+              </div>
+
+              <div className="rounded-lg border bg-background p-3 text-sm text-muted-foreground space-y-1">
+                <p className="font-medium text-foreground">Què passarà després?</p>
+                <p>Quan hi hagi moviment, Reparteix et calcularà automàticament qui deu què i com liquidar-ho amb menys fricció.</p>
+              </div>
+            </CardContent>
+          </Card>
+        )
       ) : (
         <div className="space-y-4">
           {expensesByDay.map(({ date, items }) => (
