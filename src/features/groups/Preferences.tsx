@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, Monitor, Moon, Settings2, Sun, Wifi } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
@@ -63,18 +63,37 @@ function ThemePreferenceCard() {
 function SyncPreferencesCard() {
   const [draft, setDraft] = useState<SyncPreferencesDraft>(() => loadSyncPreferencesDraft())
   const [status, setStatus] = useState<'idle' | 'saved' | 'reset'>('idle')
+  const statusTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
     saveSyncPreferencesDraft(draft)
   }, [draft])
 
+  useEffect(() => {
+    return () => {
+      if (statusTimeoutRef.current !== null) {
+        window.clearTimeout(statusTimeoutRef.current)
+      }
+    }
+  }, [])
+
   const preview = useMemo(() => draftToSyncConfigOverrides(draft), [draft])
+
+  const scheduleStatusReset = () => {
+    if (statusTimeoutRef.current !== null) {
+      window.clearTimeout(statusTimeoutRef.current)
+    }
+
+    statusTimeoutRef.current = window.setTimeout(() => {
+      setStatus('idle')
+      statusTimeoutRef.current = null
+    }, 2000)
+  }
 
   const setField = <K extends keyof SyncPreferencesDraft>(key: K, value: SyncPreferencesDraft[K]) => {
     setDraft((current) => ({ ...current, [key]: value }))
     setStatus('saved')
-    window.clearTimeout((setField as unknown as { timeout?: number }).timeout)
-    ;(setField as unknown as { timeout?: number }).timeout = window.setTimeout(() => setStatus('idle'), 2000)
+    scheduleStatusReset()
   }
 
   const handleReset = () => {
@@ -83,7 +102,7 @@ function SyncPreferencesCard() {
     clearSyncPreferencesDraft()
     saveSyncPreferencesDraft(next)
     setStatus('reset')
-    window.setTimeout(() => setStatus('idle'), 2000)
+    scheduleStatusReset()
   }
 
   return (
