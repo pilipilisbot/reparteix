@@ -38,6 +38,15 @@ const MAX_RECEIPT_DIMENSION = 1600
 const MAX_RECEIPT_SOURCE_PIXELS = 24_000_000
 const RECEIPT_OUTPUT_QUALITY = 0.78
 
+async function readBlobAsDataUrl(blob: Blob): Promise<string> {
+  return await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => resolve(reader.result as string)
+    reader.onerror = () => reject(new Error('No s\'ha pogut llegir la imatge optimitzada.'))
+    reader.readAsDataURL(blob)
+  })
+}
+
 async function compressReceiptImage(file: File): Promise<string> {
   const imageUrl = URL.createObjectURL(file)
 
@@ -68,38 +77,24 @@ async function compressReceiptImage(file: File): Promise<string> {
 
     context.drawImage(image, 0, 0, width, height)
 
-    return await new Promise<string>((resolve, reject) => {
-      const tryFormats: Array<{ type: string; quality?: number }> = [
-        { type: 'image/webp', quality: RECEIPT_OUTPUT_QUALITY },
-        { type: 'image/jpeg', quality: RECEIPT_OUTPUT_QUALITY },
-      ]
+    const tryFormats: Array<{ type: string; quality?: number }> = [
+      { type: 'image/webp', quality: RECEIPT_OUTPUT_QUALITY },
+      { type: 'image/jpeg', quality: RECEIPT_OUTPUT_QUALITY },
+    ]
 
-      const attempt = (index: number) => {
-        const format = tryFormats[index]
-        if (!format) {
-          reject(new Error('No s\'ha pogut optimitzar la imatge.'))
-          return
-        }
+    for (const format of tryFormats) {
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob((result) => resolve(result), format.type, format.quality)
+      })
 
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) {
-              attempt(index + 1)
-              return
-            }
-
-            const reader = new FileReader()
-            reader.onloadend = () => resolve(reader.result as string)
-            reader.onerror = () => reject(new Error('No s\'ha pogut llegir la imatge optimitzada.'))
-            reader.readAsDataURL(blob)
-          },
-          format.type,
-          format.quality,
-        )
+      if (!blob || blob.type !== format.type) {
+        continue
       }
 
-      attempt(0)
-    })
+      return await readBlobAsDataUrl(blob)
+    }
+
+    throw new Error('No s\'ha pogut optimitzar la imatge.')
   } finally {
     URL.revokeObjectURL(imageUrl)
   }
@@ -171,6 +166,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
   const archivableCount = activeExpenses.filter((e) => isExpenseArchivable(e, balances)).length
 
   const resetForm = () => {
+    receiptLoadRequestRef.current += 1
     setEditingExpenseId(null)
     setDescription('')
     setAmount('')
