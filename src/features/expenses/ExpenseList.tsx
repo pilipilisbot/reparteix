@@ -33,6 +33,73 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
   GBP: '£',
 }
 
+const MAX_RECEIPT_FILE_SIZE_MB = 12
+const MAX_RECEIPT_DIMENSION = 1600
+const MAX_RECEIPT_SOURCE_PIXELS = 24_000_000
+const RECEIPT_OUTPUT_QUALITY = 0.78
+
+async function readBlobAsDataUrl(blob: Blob): Promise<string> {
+  return await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => resolve(reader.result as string)
+    reader.onerror = () => reject(new Error('No s\'ha pogut llegir la imatge optimitzada.'))
+    reader.readAsDataURL(blob)
+  })
+}
+
+async function compressReceiptImage(file: File): Promise<string> {
+  const imageUrl = URL.createObjectURL(file)
+
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image()
+      img.onload = () => resolve(img)
+      img.onerror = () => reject(new Error('No s\'ha pogut carregar la imatge seleccionada.'))
+      img.src = imageUrl
+    })
+
+    if (image.width * image.height > MAX_RECEIPT_SOURCE_PIXELS) {
+      throw new Error('La imatge és massa gran per processar-la amb seguretat. Prova amb una foto una mica més petita.')
+    }
+
+    const scale = Math.min(1, MAX_RECEIPT_DIMENSION / Math.max(image.width, image.height))
+    const width = Math.max(1, Math.round(image.width * scale))
+    const height = Math.max(1, Math.round(image.height * scale))
+
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+
+    const context = canvas.getContext('2d')
+    if (!context) {
+      throw new Error('El navegador no pot processar la imatge ara mateix.')
+    }
+
+    context.drawImage(image, 0, 0, width, height)
+
+    const tryFormats: Array<{ type: string; quality?: number }> = [
+      { type: 'image/webp', quality: RECEIPT_OUTPUT_QUALITY },
+      { type: 'image/jpeg', quality: RECEIPT_OUTPUT_QUALITY },
+    ]
+
+    for (const format of tryFormats) {
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob((result) => resolve(result), format.type, format.quality)
+      })
+
+      if (!blob || blob.type !== format.type) {
+        continue
+      }
+
+      return await readBlobAsDataUrl(blob)
+    }
+
+    throw new Error('No s\'ha pogut optimitzar la imatge.')
+  } finally {
+    URL.revokeObjectURL(imageUrl)
+  }
+}
+
 const emptyStateCtas = [
   {
     emoji: '🍽️',
@@ -73,6 +140,13 @@ export function ExpenseList({ group }: ExpenseListProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const modalRef = useRef<HTMLDivElement>(null)
+  const receiptLoadRequestRef = useRef(0)
+
+  useEffect(() => {
+    return () => {
+      receiptLoadRequestRef.current += 1
+    }
+  }, [])
 
   useEffect(() => {
     if (viewingReceipt) {
@@ -92,6 +166,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
   const archivableCount = activeExpenses.filter((e) => isExpenseArchivable(e, balances)).length
 
   const resetForm = () => {
+    receiptLoadRequestRef.current += 1
     setEditingExpenseId(null)
     setDescription('')
     setAmount('')
@@ -206,23 +281,30 @@ export function ExpenseList({ group }: ExpenseListProps) {
       return
     }
 
-    const MAX_SIZE_MB = 5
-    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-      setReceiptError(`La imatge no pot superar ${MAX_SIZE_MB} MB.`)
+    if (file.size > MAX_RECEIPT_FILE_SIZE_MB * 1024 * 1024) {
+      setReceiptError(`La imatge no pot superar ${MAX_RECEIPT_FILE_SIZE_MB} MB.`)
       resetInput()
       return
     }
 
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      setReceiptImage(reader.result as string)
-      resetInput()
-    }
-    reader.onerror = () => {
-      setReceiptError("No s'ha pogut carregar la imatge. Torna-ho a intentar.")
-      resetInput()
-    }
-    reader.readAsDataURL(file)
+    const requestId = receiptLoadRequestRef.current + 1
+    receiptLoadRequestRef.current = requestId
+
+    void compressReceiptImage(file)
+      .then((optimizedImage) => {
+        if (receiptLoadRequestRef.current !== requestId) return
+        setReceiptImage(optimizedImage)
+        resetInput()
+      })
+      .catch((error: unknown) => {
+        if (receiptLoadRequestRef.current !== requestId) return
+        setReceiptError(
+          error instanceof Error
+            ? error.message
+            : "No s'ha pogut carregar la imatge. Torna-ho a intentar.",
+        )
+        resetInput()
+      })
   }
 
   const toggleSplitMember = (memberId: string) => {
