@@ -126,6 +126,7 @@ export function createSyncSession(
   const MAX_INCOMING_TRANSFER_AGE_MS = 60_000
   let outgoingTransferInFlight = false
   let incomingTransferInFlight = false
+  const peerSyncState = new Map<string, { localDataSent: boolean; localDataApplied: boolean }>()
   const incomingPayloadChunks = new Map<string, {
     remotePeerId: string
     groupId: string
@@ -152,6 +153,15 @@ export function createSyncSession(
         incomingPayloadChunks.delete(key)
       }
     }
+  }
+
+  function getPeerSyncState(remotePeerId: string) {
+    const existing = peerSyncState.get(remotePeerId)
+    if (existing) return existing
+
+    const created = { localDataSent: false, localDataApplied: false }
+    peerSyncState.set(remotePeerId, created)
+    return created
   }
 
   async function sendEncryptedPayload(conn: PeerConnection, targetGroupId: string, payload: EncryptedPayload) {
@@ -385,6 +395,7 @@ export function createSyncSession(
       const json = JSON.stringify(envelope)
       const encrypted = await encryptSyncPayload(passphrase, json)
       await sendEncryptedPayload(conn, groupId, encrypted)
+      getPeerSyncState(remotePeerId).localDataSent = true
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error preparant dades'
       conn.send(createSyncAckMessage(groupId, 'error', msg))
@@ -413,6 +424,7 @@ export function createSyncSession(
       const report = await reparteix.sync.applyGroupJson(raw)
 
       conn?.send(createSyncAckMessage(groupId, 'ok'))
+      getPeerSyncState(remotePeerId).localDataApplied = true
 
       update({
         state: 'completed',
@@ -435,15 +447,36 @@ export function createSyncSession(
   }
 
   function handleSyncAck(message: SyncMessage & { type: 'sync-ack' }) {
+    const remotePeerId = status.remotePeerId
+    const syncState = remotePeerId ? getPeerSyncState(remotePeerId) : null
+
     if (message.status === 'ok') {
-      // If we haven't received data yet, the peer has applied our data
       if (status.state === 'syncing') {
+        if (syncState?.localDataApplied) {
+          update({
+            state: 'completed',
+            lastSuccessAt: new Date().toISOString(),
+            message: 'Sincronització completada. Els dos dispositius ja estan al dia.',
+          })
+          return
+        }
+
         update({
-          message: 'El peer ha rebut les dades correctament. Esperant dades del peer…',
+          message: 'L’altre dispositiu ha rebut i aplicat les dades correctament. Esperant dades remotes…',
         })
       }
     } else if (message.status === 'no-data') {
-      update({ message: 'El peer no té dades per aquest grup.' })
+      if (status.state === 'syncing') {
+        if (syncState?.localDataApplied || syncState?.localDataSent) {
+          update({
+            state: 'completed',
+            lastSuccessAt: new Date().toISOString(),
+            message: 'Sincronització completada. L’altre dispositiu no tenia canvis addicionals per enviar.',
+          })
+        } else {
+          update({ message: 'El peer no té dades per aquest grup.' })
+        }
+      }
     } else if (message.status === 'error') {
       update({
         state: 'error',
@@ -465,6 +498,7 @@ export function createSyncSession(
   }
 
   function handlePeerDisconnected(remotePeerId: string) {
+    peerSyncState.delete(remotePeerId)
     removeRemotePeer(remotePeerId)
     for (const [key, transfer] of incomingPayloadChunks.entries()) {
       if (transfer.remotePeerId === remotePeerId) {
@@ -640,6 +674,7 @@ export function createSyncSession(
 
     /** Clean up all resources. */
     destroy() {
+      peerSyncState.clear()
       peerManager.destroy()
       listeners.clear()
     },
