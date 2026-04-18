@@ -383,22 +383,11 @@ export function createSyncSession(
         return
       }
 
-      const hasAnyData =
-        !envelope.group.deleted ||
-        envelope.group.members.length > 0 ||
-        envelope.expenses.length > 0 ||
-        envelope.payments.length > 0
-
-      if (!hasAnyData) {
-        conn.send(createSyncAckMessage(groupId, 'no-data'))
-        return
-      }
-
       // Encrypt and send
       const json = JSON.stringify(envelope)
       const encrypted = await encryptSyncPayload(passphrase, json)
-      localDataSent = true
       await sendEncryptedPayload(conn, groupId, encrypted)
+      localDataSent = true
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error preparant dades'
       conn.send(createSyncAckMessage(groupId, 'error', msg))
@@ -462,9 +451,7 @@ export function createSyncSession(
         }
 
         update({
-          state: 'completed',
-          lastSuccessAt: new Date().toISOString(),
-          message: 'Sincronització completada. L’altre dispositiu ha rebut i aplicat les dades correctament.',
+          message: 'L’altre dispositiu ha rebut i aplicat les dades correctament. Esperant dades remotes…',
         })
       }
     } else if (message.status === 'no-data') {
@@ -500,8 +487,6 @@ export function createSyncSession(
   }
 
   function handlePeerDisconnected(remotePeerId: string) {
-    localDataSent = false
-    localDataApplied = false
     removeRemotePeer(remotePeerId)
     for (const [key, transfer] of incomingPayloadChunks.entries()) {
       if (transfer.remotePeerId === remotePeerId) {

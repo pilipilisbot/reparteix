@@ -150,7 +150,7 @@ function SyncReportDetails({ report }: { report: SyncReport }) {
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-amber-950 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100">
           <p className="font-medium">S'han detectat canvis simultanis</p>
           <p className="mt-1 text-sm text-amber-900/80 dark:text-amber-100/80">
-            Reparteix ha mantingut la versió local en els casos dubtosos per evitar sobrescriptures silencioses.
+            Reparteix ha mantingut la versió local en els casos dubtosos per evitar sobreescriptures silencioses.
           </p>
           <ul className="mt-2 space-y-1 text-sm">
             {Object.entries(conflictSummary).map(([entity, count]) => (
