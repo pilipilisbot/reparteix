@@ -4,6 +4,8 @@ import type { ActivityEntry } from '@/domain'
 import { reparteix } from '@/sdk'
 import { Card, CardContent } from '@/components/ui/card'
 
+type Snapshot = Record<string, unknown>
+
 function formatRelative(at: string): string {
   const diffMs = Date.now() - new Date(at).getTime()
   const diffMin = Math.round(diffMs / 60000)
@@ -24,6 +26,20 @@ function formatRelative(at: string): string {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+function formatMoney(value: unknown): string | null {
+  if (typeof value !== 'number') return null
+  return `${value.toFixed(2)} €`
+}
+
+function formatValue(value: unknown): string | null {
+  if (value === undefined || value === null || value === '') return null
+  if (typeof value === 'number') return formatMoney(value)
+  if (typeof value === 'string') return value
+  if (typeof value === 'boolean') return value ? 'sí' : 'no'
+  if (Array.isArray(value)) return `${value.length} element${value.length === 1 ? '' : 's'}`
+  return null
 }
 
 function getIcon(entry: ActivityEntry) {
@@ -78,7 +94,7 @@ function getTitle(entry: ActivityEntry): string {
   }
 }
 
-function getDetail(entry: ActivityEntry): string | null {
+function getHeadline(entry: ActivityEntry): string | null {
   if (entry.entityType === 'member') {
     const meta = entry.meta as { memberName?: string, fromName?: string, toName?: string } | undefined
     if (entry.action === 'member.renamed' && meta?.fromName && meta?.toName) {
@@ -107,6 +123,66 @@ function getDetail(entry: ActivityEntry): string | null {
   const after = entry.after as { name?: string } | undefined
   const before = entry.before as { name?: string } | undefined
   return after?.name ?? before?.name ?? null
+}
+
+function getFieldLabel(field: string): string {
+  switch (field) {
+    case 'name':
+      return 'Nom'
+    case 'description':
+      return 'Descripció'
+    case 'icon':
+      return 'Icona'
+    case 'currency':
+      return 'Moneda'
+    case 'amount':
+      return 'Import'
+    case 'date':
+      return 'Data'
+    case 'payerId':
+      return 'Pagador'
+    case 'fromId':
+      return 'De'
+    case 'toId':
+      return 'Cap a'
+    case 'splitAmong':
+      return 'Repartit entre'
+    case 'archived':
+      return 'Arxivat'
+    case 'deleted':
+      return 'Eliminat'
+    default:
+      return field
+  }
+}
+
+function getDiffLines(entry: ActivityEntry): string[] {
+  if (!entry.before || !entry.after) return []
+
+  const before = entry.before as Snapshot
+  const after = entry.after as Snapshot
+  const interestingFields = [
+    'name',
+    'description',
+    'icon',
+    'currency',
+    'amount',
+    'date',
+    'payerId',
+    'fromId',
+    'toId',
+    'splitAmong',
+    'archived',
+    'deleted',
+  ]
+
+  return interestingFields
+    .filter((field) => JSON.stringify(before[field]) !== JSON.stringify(after[field]))
+    .map((field) => {
+      const beforeValue = formatValue(before[field]) ?? 'buit'
+      const afterValue = formatValue(after[field]) ?? 'buit'
+      return `${getFieldLabel(field)}: ${beforeValue} → ${afterValue}`
+    })
 }
 
 export function ActivityFeed({ groupId }: { groupId: string }) {
@@ -150,20 +226,29 @@ export function ActivityFeed({ groupId }: { groupId: string }) {
   return (
     <div className="space-y-3 p-4">
       {activity.map((entry) => {
-        const detail = getDetail(entry)
+        const headline = getHeadline(entry)
+        const diffLines = entry.action.endsWith('.updated') ? getDiffLines(entry) : []
+
         return (
           <Card key={entry.id}>
             <CardContent className="flex items-start gap-3 pt-6">
               <div className="mt-0.5 rounded-full bg-muted p-2 text-muted-foreground">
                 {getIcon(entry)}
               </div>
-              <div className="min-w-0 flex-1 space-y-1">
+              <div className="min-w-0 flex-1 space-y-1.5">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-medium text-foreground">{getTitle(entry)}</p>
                   <span className="shrink-0 text-xs text-muted-foreground">{formatRelative(entry.at)}</span>
                 </div>
-                {detail && (
-                  <p className="text-sm text-muted-foreground break-words">{detail}</p>
+                {headline && (
+                  <p className="text-sm text-muted-foreground break-words">{headline}</p>
+                )}
+                {diffLines.length > 0 && (
+                  <ul className="space-y-1 text-sm text-muted-foreground">
+                    {diffLines.map((line) => (
+                      <li key={line} className="break-words">• {line}</li>
+                    ))}
+                  </ul>
                 )}
               </div>
             </CardContent>
