@@ -1,3 +1,10 @@
+# [1.39.0](https://github.com/reparteix/reparteix/compare/v1.38.0...v1.39.0) (2026-04-18)
+
+
+### Features
+
+* align onboarding copy with positioning ([0b1f73b](https://github.com/reparteix/reparteix/commit/0b1f73bcd2acc21443beb6ce2e2f47240b100c57))
+
 # [1.38.0](https://github.com/reparteix/reparteix/compare/v1.37.0...v1.38.0) (2026-04-17)
 
 
