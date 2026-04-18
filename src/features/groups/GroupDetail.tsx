@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, X, Pencil, Check, Settings, Archive, RefreshCw } from 'lucide-react'
+import { ArrowLeft, Plus, X, Pencil, Check, Settings, Archive, RefreshCw, History } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -9,6 +9,7 @@ import { useStore } from '../../store'
 import { ExpenseList } from '../expenses/ExpenseList'
 import { BalanceView } from '../balances/BalanceView'
 import { SettlementList } from '../settlements/SettlementList'
+import { ActivityFeed } from './ActivityFeed'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -312,6 +313,10 @@ export function GroupDetail() {
           <TabsTrigger value="settlements" className="flex-1">
             Pagaments
           </TabsTrigger>
+          <TabsTrigger value="activity" className="flex-1 gap-1">
+            <History className="h-3.5 w-3.5" />
+            Historial
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="expenses" className="flex-1 overflow-y-auto min-h-0 pb-4">
@@ -322,6 +327,9 @@ export function GroupDetail() {
         </TabsContent>
         <TabsContent value="settlements" className="flex-1 overflow-y-auto min-h-0 pb-4">
           <SettlementList group={group} />
+        </TabsContent>
+        <TabsContent value="activity" className="flex-1 overflow-y-auto min-h-0 pb-4">
+          <ActivityFeed groupId={group.id} />
         </TabsContent>
       </Tabs>
       </div>
