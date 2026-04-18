@@ -8,6 +8,7 @@ beforeEach(async () => {
   await db.groups.clear()
   await db.expenses.clear()
   await db.payments.clear()
+  await db.activity.clear()
   useStore.setState({
     groups: [],
     groupTotals: {},
@@ -29,6 +30,51 @@ async function createGroupWithMembers(groupName: string, memberNames: string[]) 
 }
 
 // ─── Groups ───────────────────────────────────────────────────────────────────
+
+describe('activity log', () => {
+  it('registra activitat quan es crea i actualitza una despesa', async () => {
+    const group = await createGroupWithMembers('Viatge', ['Anna', 'Bernat'])
+    const members = group.members
+
+    const expense = await reparteix.addExpense({
+      groupId: group.id,
+      description: 'Sopar',
+      amount: 60,
+      payerId: members[0].id,
+      splitAmong: members.map((m) => m.id),
+      date: '2024-01-15',
+    })
+
+    await reparteix.updateExpense({ ...expense, description: 'Sopar final', amount: 80 })
+
+    const activity = await reparteix.listActivity(group.id)
+    expect(activity).toHaveLength(5)
+    expect(activity[0].action).toBe('expense.updated')
+    expect(activity[0].before).toMatchObject({ description: 'Sopar', amount: 60 })
+    expect(activity[0].after).toMatchObject({ description: 'Sopar final', amount: 80 })
+    expect(activity[1].action).toBe('expense.created')
+  })
+
+  it('registra activitat quan s’esborra un pagament', async () => {
+    const group = await createGroupWithMembers('Viatge', ['Anna', 'Bernat'])
+    const members = group.members
+
+    const payment = await reparteix.addPayment({
+      groupId: group.id,
+      fromId: members[1].id,
+      toId: members[0].id,
+      amount: 30,
+      date: '2024-01-16',
+    })
+
+    await reparteix.deletePayment(payment.id)
+
+    const activity = await reparteix.listActivity(group.id)
+    expect(activity[0].action).toBe('payment.deleted')
+    expect(activity[0].before).toMatchObject({ id: payment.id, amount: 30, deleted: false })
+    expect(activity[0].after).toMatchObject({ id: payment.id, amount: 30, deleted: true })
+  })
+})
 
 describe('groups', () => {
   it("addGroup crea un grup i apareix a l'estat del store", async () => {
