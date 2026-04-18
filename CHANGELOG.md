@@ -1,3 +1,10 @@
+# [1.41.0](https://github.com/reparteix/reparteix/compare/v1.40.0...v1.41.0) (2026-04-18)
+
+
+### Features
+
+* add activity log foundation ([#147](https://github.com/reparteix/reparteix/issues/147)) ([f6456b8](https://github.com/reparteix/reparteix/commit/f6456b8cc19730866c90c4a12d1ca1b7df6c8d03))
+
 # [1.40.0](https://github.com/reparteix/reparteix/compare/v1.39.0...v1.40.0) (2026-04-18)
 
 
