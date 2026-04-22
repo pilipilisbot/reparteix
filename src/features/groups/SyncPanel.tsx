@@ -13,7 +13,6 @@ import {
   Link2,
   ShieldCheck,
   Smartphone,
-  ArrowRight,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,6 +29,7 @@ import { useStore } from '@/store'
 import { encodeBase64Url } from '@/lib/base64url'
 import { loadStoredSyncPassphrase, saveStoredSyncPassphrase } from '@/lib/sync-passphrase'
 import { shareUrl } from '@/lib/web-share'
+import { createQrSvg } from '@/lib/qr'
 import type { SyncReport } from '@/domain/services/sync'
 
 interface SyncPanelProps {
@@ -284,6 +284,64 @@ function SyncStepList({ state, compact = false }: { state: string, compact?: boo
   )
 }
 
+function HandoffCard({
+  qrMarkup,
+  embedded,
+  sharedLinkStatus,
+  linkCopied,
+  onShare,
+  onCopy,
+  onCancel,
+}: {
+  qrMarkup: string
+  embedded: boolean
+  sharedLinkStatus: 'idle' | 'shared' | 'copied'
+  linkCopied: boolean
+  onShare: () => void
+  onCopy: () => void
+  onCancel: () => void
+}) {
+  return (
+    <div className={`rounded-[28px] border ${embedded ? 'bg-primary/5 border-primary/20' : 'bg-muted/20'} p-4`}>
+      <div className="space-y-4">
+        <div className="mx-auto w-full max-w-[320px] rounded-[28px] border bg-white p-2 shadow-sm sm:max-w-[360px]">
+          {qrMarkup ? (
+            <div
+              className="qr-frame aspect-square w-full overflow-hidden rounded-[24px] bg-white"
+              dangerouslySetInnerHTML={{ __html: qrMarkup }}
+            />
+          ) : (
+            <div className="flex aspect-square w-full items-center justify-center rounded-[24px] bg-muted px-6 text-center text-xs text-muted-foreground">
+              Preparant el QR…
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-1 text-center">
+          <p className="text-base font-semibold text-foreground">Escaneja el QR a l’altre dispositiu</p>
+          <p className="text-sm text-muted-foreground">Si no pots escanejar-lo, comparteix l’enllaç o copia’l.</p>
+        </div>
+
+        <div className="space-y-2">
+          <Button onClick={onShare} className="w-full">
+            {sharedLinkStatus !== 'idle' ? <Check className="mr-2 h-4 w-4" /> : <Link2 className="mr-2 h-4 w-4" />}
+            {sharedLinkStatus === 'shared' ? 'Enllaç compartit!' : sharedLinkStatus === 'copied' ? 'Enllaç copiat!' : 'Compartir enllaç'}
+          </Button>
+
+          <Button type="button" variant="outline" onClick={onCopy} className="w-full">
+            {linkCopied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
+            {linkCopied ? 'Enllaç copiat' : 'Copiar enllaç'}
+          </Button>
+
+          <Button type="button" variant="ghost" onClick={onCancel} className="w-full text-muted-foreground">
+            Cancel·lar
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function SyncPanel({ groupId, embedded = false, onActiveStateChange }: SyncPanelProps) {
   const group = useStore((state) => state.groups.find((item) => item.id === groupId))
   const updateGroup = useStore((state) => state.updateGroup)
@@ -295,8 +353,8 @@ export function SyncPanel({ groupId, embedded = false, onActiveStateChange }: Sy
   const [passphrase, setPassphrase] = useState(rememberedPassphrase)
   const [showPassphrase, setShowPassphrase] = useState(false)
   const [mode, setMode] = useState<'idle' | 'host' | 'join'>('idle')
-  const [copied, setCopied] = useState(false)
   const [sharedLinkStatus, setSharedLinkStatus] = useState<'idle' | 'shared' | 'copied'>('idle')
+  const [linkCopied, setLinkCopied] = useState(false)
   const { loadGroups, loadGroupData } = useStore()
 
   const sync = useSync({
@@ -311,10 +369,34 @@ export function SyncPanel({ groupId, embedded = false, onActiveStateChange }: Sy
   const showCompactStatusDetails = sync.state !== 'idle' && !sync.error
   const isWaitingForPeer = mode === 'host' && sync.state === 'waiting-for-peer'
   const isEmbeddedWaiting = embedded && isWaitingForPeer
+  const hideSetupWhileWaiting = isWaitingForPeer
+  const syncUrl = canStart ? buildSyncUrl(groupId, passphrase) : ''
+  const [qrMarkup, setQrMarkup] = useState('')
 
   useEffect(() => {
     setPassphrase(rememberedPassphrase)
   }, [rememberedPassphrase])
+
+  useEffect(() => {
+    let cancelled = false
+
+    if (!syncUrl) {
+      setQrMarkup('')
+      return
+    }
+
+    createQrSvg(syncUrl, 220)
+      .then((svg) => {
+        if (!cancelled) setQrMarkup(svg)
+      })
+      .catch(() => {
+        if (!cancelled) setQrMarkup('')
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [syncUrl])
 
   useEffect(() => {
     saveStoredSyncPassphrase(groupId, passphrase)
@@ -350,16 +432,8 @@ export function SyncPanel({ groupId, embedded = false, onActiveStateChange }: Sy
     await loadGroupData(groupId)
   }
 
-  const handleCopyPeerId = async () => {
-    if (sync.peerId) {
-      await navigator.clipboard.writeText(sync.peerId)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }
-  }
-
   const handleCopySyncLink = async () => {
-    const url = buildSyncUrl(groupId, passphrase)
+    const url = syncUrl
     const result = await shareUrl({
       title: `Sync de grup · Reparteix`,
       text: 'Obre aquest enllaç a l\'altre dispositiu per sincronitzar el grup a Reparteix',
@@ -370,18 +444,25 @@ export function SyncPanel({ groupId, embedded = false, onActiveStateChange }: Sy
     setTimeout(() => setSharedLinkStatus('idle'), 3000)
   }
 
+  const handleCopyRawLink = async () => {
+    if (!syncUrl) return
+    await navigator.clipboard.writeText(syncUrl)
+    setLinkCopied(true)
+    setTimeout(() => setLinkCopied(false), 2000)
+  }
+
   const content = (
     <div className="space-y-4">
-      {showSetupCopy && (
-        <div className="space-y-4 rounded-2xl border bg-muted/20 p-4">
+      {showSetupCopy && !hideSetupWhileWaiting && (
+        <div className="space-y-3 rounded-2xl border bg-muted/20 p-4">
           <div className="flex items-start gap-3">
             <div className="rounded-full bg-primary/10 p-2 text-primary">
               <Smartphone className="h-4 w-4" />
             </div>
             <div className="space-y-1">
-              <p className="font-medium">Sincronitza aquest grup amb un altre dispositiu</p>
+              <p className="font-medium">Passa aquest grup a un altre dispositiu</p>
               <p className="text-sm text-muted-foreground">
-                Ideal si vols continuar el mateix grup al mòbil, tauleta o un altre navegador sense exportar ni importar fitxers manualment.
+                Flux curt: poses la contrasenya, toques sincronitzar i ensenyes el QR o comparteixes l’enllaç.
               </p>
             </div>
           </div>
@@ -392,43 +473,44 @@ export function SyncPanel({ groupId, embedded = false, onActiveStateChange }: Sy
               <span className="font-medium">Privat per disseny</span>
             </div>
             <p>
-              L'enllaç només serveix per connectar els dos dispositius. Les dades del grup viatgen protegides amb la contrasenya del grup.
+              L'enllaç només serveix per obrir la connexió entre dispositius. Les dades del grup viatgen protegides amb la contrasenya del grup.
             </p>
           </div>
         </div>
       )}
 
-        {/* Passphrase input */}
-        <div className="space-y-1.5">
-          <Label htmlFor="sync-passphrase">Contrasenya del grup</Label>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Input
-                id="sync-passphrase"
-                type={showPassphrase ? 'text' : 'password'}
-                value={passphrase}
-                onChange={(e) => setPassphrase(e.target.value)}
-                onBlur={() => {
-                  void persistPassphrase(passphrase)
-                }}
-                placeholder="Mínim 4 caràcters"
-                disabled={isActive}
-                autoComplete="new-password"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassphrase(!showPassphrase)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                aria-label={showPassphrase ? 'Amagar contrasenya' : 'Mostrar contrasenya'}
-              >
-                {showPassphrase ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
+        {!hideSetupWhileWaiting && (
+          <div className="space-y-1.5">
+            <Label htmlFor="sync-passphrase">Contrasenya del grup</Label>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Input
+                  id="sync-passphrase"
+                  type={showPassphrase ? 'text' : 'password'}
+                  value={passphrase}
+                  onChange={(e) => setPassphrase(e.target.value)}
+                  onBlur={() => {
+                    void persistPassphrase(passphrase)
+                  }}
+                  placeholder="Mínim 4 caràcters"
+                  disabled={isActive}
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassphrase(!showPassphrase)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={showPassphrase ? 'Amagar contrasenya' : 'Mostrar contrasenya'}
+                >
+                  {showPassphrase ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
+            <p className="text-xs text-muted-foreground">
+              Aquesta contrasenya es guarda al grup i en aquest dispositiu perquè no l'hagis d'escriure cada vegada.
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Aquesta contrasenya es guarda al grup i en aquest dispositiu perquè no l'hagis d'escriure cada vegada.
-          </p>
-        </div>
+        )}
 
         {sync.state === 'idle' && (
           <Button
@@ -449,34 +531,29 @@ export function SyncPanel({ groupId, embedded = false, onActiveStateChange }: Sy
           </Button>
         )}
 
-        {showSetupCopy && <SyncStepList state={sync.state} compact={embedded} />}
+        {showSetupCopy && !hideSetupWhileWaiting && (
+          <div className="rounded-xl border border-dashed bg-background/70 px-3 py-2 text-xs text-muted-foreground">
+            1. Escriu la contrasenya del grup · 2. Toca sincronitzar · 3. Escaneja el QR o obre l’enllaç a l’altre dispositiu
+          </div>
+        )}
 
         {/* Active sync status */}
         {sync.state !== 'idle' && (
           <div className="space-y-3">
             {/* Status header */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <StateIcon state={sync.state} />
-                <StateBadge state={sync.state} />
+            {!isWaitingForPeer && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <StateIcon state={sync.state} />
+                  <StateBadge state={sync.state} />
+                </div>
               </div>
-              {mode === 'host' && sync.peerId && sync.state === 'waiting-for-peer' && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCopyPeerId}
-                  className="h-7 px-2 text-xs text-muted-foreground"
-                >
-                  {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
-                  {copied ? 'Copiat' : 'ID'}
-                </Button>
-              )}
-            </div>
+            )}
 
             {/* Status message */}
             <div className="space-y-3">
-              <p className="text-sm font-medium leading-snug">{sync.message}</p>
-              <SyncStepList state={sync.state} compact={embedded} />
+              {!isWaitingForPeer && <p className="text-sm font-medium leading-snug">{sync.message}</p>}
+              {!isWaitingForPeer && <SyncStepList state={sync.state} compact={embedded} />}
               {sync.error && (
                 <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                   <div className="flex items-start gap-2">
@@ -489,15 +566,11 @@ export function SyncPanel({ groupId, embedded = false, onActiveStateChange }: Sy
                 </div>
               )}
               {isWaitingForPeer && !isEmbeddedWaiting && (
-                <div className="rounded-xl border bg-primary/5 p-3 text-sm text-muted-foreground">
-                  <div className="mb-1 flex items-center gap-2 font-medium text-foreground">
-                    <ArrowRight className="h-4 w-4 text-primary" />
-                    Què ha de fer l'altre dispositiu ara?
-                  </div>
-                  <p>Obrir l'enllaç compartit, comprovar la mateixa contrasenya del grup i esperar que la connexió es completi.</p>
-                </div>
+                <p className="text-center text-sm text-muted-foreground">
+                  Esperant que l’altre dispositiu entri…
+                </p>
               )}
-              {showCompactStatusDetails && (sync.remotePeerIds.length > 0 || sync.lastAttemptAt || sync.lastSuccessAt) && (
+              {showCompactStatusDetails && !isWaitingForPeer && (sync.remotePeerIds.length > 0 || sync.lastAttemptAt || sync.lastSuccessAt) && (
                 <details className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
                   <summary className="cursor-pointer select-none font-medium text-foreground/80">
                     Detalls
@@ -519,28 +592,19 @@ export function SyncPanel({ groupId, embedded = false, onActiveStateChange }: Sy
 
             {/* Instructions for host + share link */}
             {mode === 'host' && sync.state === 'waiting-for-peer' && (
-              <div className={`rounded-xl border p-3 ${embedded ? 'bg-primary/5 border-primary/20 space-y-3' : 'bg-muted/40 space-y-2 text-sm'}`}>
-                <div className="space-y-1">
-                  <p className={`${embedded ? 'text-sm font-medium text-foreground' : 'text-muted-foreground'}`}>
-                    {embedded
-                      ? 'Comparteix l’enllaç perquè l’altre dispositiu entri directament a la sincronització.'
-                      : 'Comparteix l\'enllaç amb l\'altre dispositiu i la sincronització començarà quan l\'obrin.'}
-                  </p>
-                  {embedded && (
-                    <p className="text-xs text-muted-foreground">
-                      Aquesta és l’acció principal ara mateix.
-                    </p>
-                  )}
-                </div>
-                <Button
-                  size={embedded ? 'default' : 'sm'}
-                  onClick={handleCopySyncLink}
-                  className="w-full"
-                >
-                  {sharedLinkStatus !== 'idle' ? <Check className="h-4 w-4 mr-2" /> : <Link2 className="h-4 w-4 mr-2" />}
-                  {sharedLinkStatus === 'shared' ? 'Enllaç compartit!' : sharedLinkStatus === 'copied' ? 'Enllaç copiat!' : 'Compartir enllaç'}
-                </Button>
-              </div>
+              <HandoffCard
+                qrMarkup={qrMarkup}
+                embedded={embedded}
+                sharedLinkStatus={sharedLinkStatus}
+                linkCopied={linkCopied}
+                onShare={() => {
+                  void handleCopySyncLink()
+                }}
+                onCopy={() => {
+                  void handleCopyRawLink()
+                }}
+                onCancel={handleReset}
+              />
             )}
 
             {/* Sync report */}
@@ -574,7 +638,7 @@ export function SyncPanel({ groupId, embedded = false, onActiveStateChange }: Sy
                   </Button>
                 </>
               )}
-              {isActive && (
+              {isActive && !isWaitingForPeer && (
                 <Button variant="ghost" onClick={handleReset} className="text-muted-foreground">
                   Cancel·lar
                 </Button>

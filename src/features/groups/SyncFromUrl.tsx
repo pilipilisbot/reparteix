@@ -168,8 +168,8 @@ export function SyncFromUrl() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">Sincronització P2P</h1>
-            <p className="text-indigo-200 text-sm">Via enllaç directe</p>
+            <h1 className="text-2xl font-bold">Continuar grup en aquest dispositiu</h1>
+            <p className="text-indigo-200 text-sm">Via enllaç o QR</p>
           </div>
         </div>
       </div>
@@ -179,8 +179,11 @@ export function SyncFromUrl() {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <RefreshCw className="h-4 w-4" />
-              Rebent dades del grup
+              Connectant aquest dispositiu al grup
             </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Si tot va bé, en pocs segons veuràs el grup aquí mateix.
+            </p>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Status display */}
@@ -219,14 +222,27 @@ export function SyncFromUrl() {
               </div>
             </div>
 
+            <div className="rounded-xl border bg-muted/30 p-3 text-sm text-muted-foreground">
+              <p className="font-medium text-foreground">Què està passant?</p>
+              <p className="mt-1">Aquest flux serveix per continuar un grup existent en aquest dispositiu. No estàs entrant a un sistema d’usuaris ni acceptant una invitació personal.</p>
+            </div>
+
+            {LOADING_STATES.has(sync.state) && (
+              <div className="rounded-xl border border-dashed bg-background px-3 py-2 text-xs text-muted-foreground">
+                Mantén oberta aquesta pantalla mentre l’altre dispositiu completa la connexió.
+              </div>
+            )}
+
             {/* Message */}
-            <p className="text-sm">
+            <p className="text-sm font-medium leading-snug">
               {sync.message || 'Connectant amb l\'altre dispositiu…'}
             </p>
 
             {/* Error details */}
             {sync.state === 'error' && sync.error && (
-              <p className="text-sm text-destructive">{sync.error}</p>
+              <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+                {sync.error}
+              </div>
             )}
 
             {/* Sync report on success */}
@@ -267,7 +283,7 @@ export function SyncFromUrl() {
             {/* Waiting info */}
             {LOADING_STATES.has(sync.state) && (
               <p className="text-xs text-muted-foreground">
-                La connexió és directa entre dispositius. Les dades es xifren extrem a extrem.
+                La connexió és directa entre dispositius. El link o QR només obre aquest flux; les dades del grup viatgen protegides.
               </p>
             )}
           </CardContent>
