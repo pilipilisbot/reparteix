@@ -1,3 +1,19 @@
+# [1.43.0](https://github.com/reparteix/reparteix/compare/v1.42.0...v1.43.0) (2026-04-22)
+
+
+### Bug Fixes
+
+* make sync entry clearer ([1cc86e9](https://github.com/reparteix/reparteix/commit/1cc86e9dc39f3ac6709a7f80d19ab8d880954af6))
+* make sync entry explicit ([f4a626d](https://github.com/reparteix/reparteix/commit/f4a626d9ba8419bafabda4473ab7bead6090c6f0))
+* use clearer handoff icon ([c7e6e6f](https://github.com/reparteix/reparteix/commit/c7e6e6f396d1b5fcf22772a21f37e76d3f6e727d))
+* use outbound handoff icon ([89606c1](https://github.com/reparteix/reparteix/commit/89606c1a1d7ab92b7e81822989758da60a276724))
+* use share icon for sync handoff ([e625387](https://github.com/reparteix/reparteix/commit/e6253872ff52e2798767b9c47ec8c32bb483166d))
+
+
+### Features
+
+* clarify sync handoff iconography ([febcd19](https://github.com/reparteix/reparteix/commit/febcd19eb60260e0872d8d5912a52e4dcfab3c4d))
+
 # [1.42.0](https://github.com/reparteix/reparteix/compare/v1.41.0...v1.42.0) (2026-04-22)
 
 
