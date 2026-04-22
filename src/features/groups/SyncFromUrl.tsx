@@ -168,8 +168,8 @@ export function SyncFromUrl() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">Sincronització P2P</h1>
-            <p className="text-indigo-200 text-sm">Via enllaç directe</p>
+            <h1 className="text-2xl font-bold">Continuar grup en aquest dispositiu</h1>
+            <p className="text-indigo-200 text-sm">Via enllaç o QR</p>
           </div>
         </div>
       </div>
@@ -179,7 +179,7 @@ export function SyncFromUrl() {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <RefreshCw className="h-4 w-4" />
-              Rebent dades del grup
+              Connectant aquest dispositiu al grup
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -217,6 +217,11 @@ export function SyncFromUrl() {
                   {sync.state === 'error' && 'Error'}
                 </Badge>
               </div>
+            </div>
+
+            <div className="rounded-xl border bg-muted/30 p-3 text-sm text-muted-foreground">
+              <p className="font-medium text-foreground">Què està passant?</p>
+              <p className="mt-1">Aquest flux serveix per continuar un grup existent en aquest dispositiu. No estàs entrant a un sistema d’usuaris ni acceptant una invitació personal.</p>
             </div>
 
             {/* Message */}
@@ -267,7 +272,7 @@ export function SyncFromUrl() {
             {/* Waiting info */}
             {LOADING_STATES.has(sync.state) && (
               <p className="text-xs text-muted-foreground">
-                La connexió és directa entre dispositius. Les dades es xifren extrem a extrem.
+                La connexió és directa entre dispositius. El link o QR només obre aquest flux; les dades del grup viatgen protegides.
               </p>
             )}
           </CardContent>
