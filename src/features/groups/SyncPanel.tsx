@@ -13,7 +13,7 @@ import {
   Link2,
   ShieldCheck,
   Smartphone,
-  SquareArrowUpRight,
+  Share2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -527,7 +527,7 @@ export function SyncPanel({ groupId, embedded = false, onActiveStateChange }: Sy
             disabled={!canStart}
             className="w-full"
           >
-            <SquareArrowUpRight className="h-4 w-4 mr-2" />
+            <Share2 className="h-4 w-4 mr-2" />
             Obrir o compartir en un altre dispositiu
           </Button>
         )}

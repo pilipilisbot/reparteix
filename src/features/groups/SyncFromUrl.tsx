@@ -6,7 +6,7 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
-  SquareArrowUpRight,
+  Share2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -179,7 +179,7 @@ export function SyncFromUrl() {
         <Card className="shadow-md">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <SquareArrowUpRight className="h-4 w-4" />
+              <Share2 className="h-4 w-4" />
               Connectant aquest dispositiu al grup
             </CardTitle>
             <p className="text-sm text-muted-foreground">
