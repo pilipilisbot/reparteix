@@ -346,7 +346,7 @@ export function GroupDetail() {
           }}
         >
           <div
-            className="w-full max-w-xl max-h-[85vh] overflow-y-auto rounded-t-3xl border bg-background p-4 shadow-xl sm:mb-4 sm:rounded-2xl"
+            className="w-full max-w-xl max-h-[85vh] overflow-y-auto rounded-t-3xl border bg-background p-3 shadow-xl sm:mb-4 sm:rounded-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex justify-center sm:hidden">

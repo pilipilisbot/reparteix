@@ -477,7 +477,7 @@ export function SyncPanel({ groupId, embedded = false, onActiveStateChange }: Sy
   }
 
   const content = (
-    <div className="space-y-4">
+    <div className="space-y-4 rounded-[28px] bg-slate-50 p-3 dark:bg-slate-900/40">
       {showSetupCopy && !hideSetupWhileWaiting && (
         <div className="space-y-5 px-1">
           <div className="flex items-start gap-3">
