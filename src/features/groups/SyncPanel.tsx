@@ -607,9 +607,10 @@ export function SyncPanel({ groupId, embedded = false, onActiveStateChange }: Sy
                 </div>
               )}
               {isWaitingForPeer && !isEmbeddedWaiting && (
-                <p className="text-center text-sm text-muted-foreground">
-                  Esperant que l’altre dispositiu entri…
-                </p>
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  <p>Esperant que l’altre dispositiu entri…</p>
+                </div>
               )}
               {showCompactStatusDetails && !isWaitingForPeer && (sync.remotePeerIds.length > 0 || sync.lastAttemptAt || sync.lastSuccessAt) && (
                 <details className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
@@ -633,20 +634,26 @@ export function SyncPanel({ groupId, embedded = false, onActiveStateChange }: Sy
 
             {/* Instructions for host + share link */}
             {mode === 'host' && sync.state === 'waiting-for-peer' && (
-              <HandoffCard
-                qrMarkup={qrMarkup}
-                embedded={embedded}
-                sharedLinkStatus={sharedLinkStatus}
-                linkCopied={linkCopied}
-                syncUrl={syncUrl}
-                onShare={() => {
-                  void handleCopySyncLink()
-                }}
-                onCopy={() => {
-                  void handleCopyRawLink()
-                }}
-                onCancel={handleReset}
-              />
+              <div className="space-y-3">
+                <div className="flex items-center justify-center gap-2 text-sm text-primary">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="font-medium">Esperant connexió de l’altre dispositiu…</span>
+                </div>
+                <HandoffCard
+                  qrMarkup={qrMarkup}
+                  embedded={embedded}
+                  sharedLinkStatus={sharedLinkStatus}
+                  linkCopied={linkCopied}
+                  syncUrl={syncUrl}
+                  onShare={() => {
+                    void handleCopySyncLink()
+                  }}
+                  onCopy={() => {
+                    void handleCopyRawLink()
+                  }}
+                  onCancel={handleReset}
+                />
+              </div>
             )}
 
             {/* Sync report */}
