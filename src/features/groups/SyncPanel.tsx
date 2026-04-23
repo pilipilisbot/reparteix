@@ -308,19 +308,19 @@ function HandoffCard({
   onCancel: () => void
 }) {
   return (
-    <div className={`${embedded ? 'bg-primary/5' : 'bg-muted/15'} px-2 py-2 sm:px-3`}>
-      <div className="mx-auto flex max-w-[280px] flex-col items-center text-center">
-        <div className="mb-3 flex items-center gap-2 self-start text-sm font-semibold text-foreground">
+    <div className={`${embedded ? 'bg-primary/5' : 'bg-muted/15'} px-2 py-1.5 sm:px-3`}>
+      <div className="mx-auto flex max-w-[272px] flex-col items-center text-center">
+        <div className="mb-2.5 flex items-center gap-2 self-start text-sm font-semibold text-foreground">
           <div className="rounded-full bg-success/10 p-1.5 text-success">
             <CheckCircle2 className="h-4 w-4" />
           </div>
           <span>Sincronització activa</span>
         </div>
 
-        <div className="w-full rounded-[28px] bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
+        <div className="w-full rounded-[32px] bg-white p-2.5 shadow-[0_10px_26px_rgba(15,23,42,0.08)]">
           {qrMarkup ? (
             <div
-              className="qr-frame aspect-square w-full overflow-hidden rounded-[24px] bg-white"
+              className="qr-frame aspect-square w-full overflow-hidden rounded-[28px] bg-white"
               dangerouslySetInnerHTML={{ __html: qrMarkup }}
             />
           ) : (
@@ -330,36 +330,36 @@ function HandoffCard({
           )}
         </div>
 
-        <div className="mt-4 space-y-1">
-          <p className="text-lg font-semibold text-foreground">Escaneja el QR</p>
+        <div className="mt-3 space-y-1">
+          <p className="text-[1.7rem] font-semibold leading-none text-foreground">Escaneja el QR</p>
           <p className="text-sm leading-5 text-muted-foreground">Obre aquest grup a l’altre dispositiu amb el QR o amb l’enllaç temporal.</p>
         </div>
 
-        <div className="mt-4 w-full space-y-2">
-          <Button onClick={onShare} className="h-11 w-full rounded-2xl shadow-sm">
+        <div className="mt-3 w-full space-y-2">
+          <Button onClick={onShare} className="h-10.5 w-full rounded-full shadow-sm">
             {sharedLinkStatus !== 'idle' ? <Check className="mr-2 h-4 w-4" /> : <Share2 className="mr-2 h-4 w-4" />}
             {sharedLinkStatus === 'shared' ? 'Enllaç compartit' : sharedLinkStatus === 'copied' ? 'Enllaç copiat' : 'Compartir enllaç'}
           </Button>
 
-          <Button type="button" variant="outline" onClick={onCopy} className="h-11 w-full rounded-2xl bg-background/90">
+          <Button type="button" variant="outline" onClick={onCopy} className="h-10.5 w-full rounded-full bg-background/90">
             {linkCopied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
             {linkCopied ? 'Enllaç copiat' : 'Copiar enllaç'}
           </Button>
         </div>
 
-        <div className="mt-3 w-full text-left">
+        <div className="mt-2.5 w-full text-left">
           <div className="flex items-start gap-2 text-xs text-muted-foreground">
             <Link2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             <span className="truncate">{syncUrl.replace(/^https?:\/\//, '')}</span>
           </div>
         </div>
 
-        <div className="mt-4 flex w-full items-start gap-2 text-left text-xs text-muted-foreground">
+        <div className="mt-3 flex w-full items-start gap-2 text-left text-xs text-muted-foreground">
           <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
           <p className="leading-5">Privat per disseny. Enllaç temporal i dades xifrades amb la contrasenya del grup.</p>
         </div>
 
-        <Button type="button" variant="ghost" onClick={onCancel} className="mt-3 h-9 px-0 text-xs text-muted-foreground hover:bg-transparent">
+        <Button type="button" variant="ghost" onClick={onCancel} className="mt-2 h-8 px-0 text-xs text-muted-foreground hover:bg-transparent">
           Desactivar sincronització
         </Button>
       </div>
@@ -410,7 +410,7 @@ export function SyncPanel({ groupId, embedded = false, onActiveStateChange }: Sy
       return
     }
 
-    createQrSvg(syncUrl, 196)
+    createQrSvg(syncUrl, 184)
       .then((svg) => {
         if (!cancelled) setQrMarkup(svg)
       })
