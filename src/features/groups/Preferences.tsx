@@ -67,8 +67,13 @@ function ThemePreferenceCard() {
   )
 }
 
-function DeviceIdentityCard() {
-  const [identity, setIdentity] = useState(() => getLocalDeviceIdentity())
+function DeviceIdentityCard({
+  identity,
+  onIdentityChange,
+}: {
+  identity: ReturnType<typeof getLocalDeviceIdentity>
+  onIdentityChange: (identity: ReturnType<typeof getLocalDeviceIdentity>) => void
+}) {
   const [deviceLabel, setDeviceLabel] = useState(identity.deviceLabel)
   const [status, setStatus] = useState<'idle' | 'saved' | 'reset'>('idle')
   const statusTimeoutRef = useRef<number | null>(null)
@@ -94,7 +99,7 @@ function DeviceIdentityCard() {
 
   const handleSave = () => {
     const next = updateLocalDeviceLabel(deviceLabel)
-    setIdentity(next)
+    onIdentityChange(next)
     setDeviceLabel(next.deviceLabel)
     setStatus('saved')
     scheduleStatusReset()
@@ -102,7 +107,7 @@ function DeviceIdentityCard() {
 
   const handleReset = () => {
     const next = resetLocalDeviceLabel()
-    setIdentity(next)
+    onIdentityChange(next)
     setDeviceLabel(next.deviceLabel)
     setStatus('reset')
     scheduleStatusReset()
@@ -317,6 +322,7 @@ function SyncPreferencesCard() {
 
 export function Preferences() {
   const navigate = useNavigate()
+  const [deviceIdentity, setDeviceIdentity] = useState(() => getLocalDeviceIdentity())
 
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6">
@@ -340,7 +346,7 @@ export function Preferences() {
           <div className="flex items-start gap-3">
             <div className="relative rounded-full bg-indigo-50 p-2 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-300">
               <Settings2 className="h-5 w-5" />
-              {needsDeviceLabelSetup(getLocalDeviceIdentity()) && (
+              {needsDeviceLabelSetup(deviceIdentity) && (
                 <span
                   className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-destructive"
                   aria-hidden="true"
@@ -350,7 +356,7 @@ export function Preferences() {
             <div className="space-y-1">
               <p className="font-medium flex items-center gap-2">
                 Preferències globals
-                {needsDeviceLabelSetup(getLocalDeviceIdentity()) && (
+                {needsDeviceLabelSetup(deviceIdentity) && (
                   <span className="inline-flex items-center rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
                     Pendent
                   </span>
@@ -366,7 +372,7 @@ export function Preferences() {
 
       <ThemePreferenceCard />
 
-      <DeviceIdentityCard />
+      <DeviceIdentityCard identity={deviceIdentity} onIdentityChange={setDeviceIdentity} />
 
       <Card>
         <CardHeader>
