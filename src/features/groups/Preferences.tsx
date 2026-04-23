@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, Monitor, Moon, Settings2, Sun, Wifi } from 'lucide-react'
+import { ArrowLeft, Monitor, Moon, Settings2, Smartphone, Sun, Wifi } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,6 +16,13 @@ import {
   saveSyncPreferencesDraft,
   type SyncPreferencesDraft,
 } from '@/lib/sync-preferences'
+import {
+  getDefaultDeviceLabel,
+  getLocalDeviceIdentity,
+  needsDeviceLabelSetup,
+  resetLocalDeviceLabel,
+  updateLocalDeviceLabel,
+} from '@/lib/device-identity'
 
 const themeOptions = [
   { value: 'light' as const, label: 'Clar', icon: Sun },
@@ -55,6 +62,116 @@ function ThemePreferenceCard() {
           Tema actiu: <strong>{themeOptions.find((option) => option.value === theme)?.label}</strong>
           {theme === 'system' ? `, resolt ara com a ${resolvedTheme === 'dark' ? 'fosc' : 'clar'}` : ''}.
         </p>
+      </CardContent>
+    </Card>
+  )
+}
+
+function DeviceIdentityCard({
+  identity,
+  onIdentityChange,
+}: {
+  identity: ReturnType<typeof getLocalDeviceIdentity>
+  onIdentityChange: (identity: ReturnType<typeof getLocalDeviceIdentity>) => void
+}) {
+  const [deviceLabel, setDeviceLabel] = useState(identity.deviceLabel)
+  const [status, setStatus] = useState<'idle' | 'saved' | 'reset'>('idle')
+  const statusTimeoutRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (statusTimeoutRef.current !== null) {
+        window.clearTimeout(statusTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  const scheduleStatusReset = () => {
+    if (statusTimeoutRef.current !== null) {
+      window.clearTimeout(statusTimeoutRef.current)
+    }
+
+    statusTimeoutRef.current = window.setTimeout(() => {
+      setStatus('idle')
+      statusTimeoutRef.current = null
+    }, 2000)
+  }
+
+  const handleSave = () => {
+    const next = updateLocalDeviceLabel(deviceLabel)
+    onIdentityChange(next)
+    setDeviceLabel(next.deviceLabel)
+    setStatus('saved')
+    scheduleStatusReset()
+  }
+
+  const handleReset = () => {
+    const next = resetLocalDeviceLabel()
+    onIdentityChange(next)
+    setDeviceLabel(next.deviceLabel)
+    setStatus('reset')
+    scheduleStatusReset()
+  }
+
+  const defaultLabel = getDefaultDeviceLabel(identity.deviceId)
+  const previewIdentity = {
+    ...identity,
+    deviceLabel: deviceLabel.trim() || defaultLabel,
+  }
+  const needsSetup = needsDeviceLabelSetup(previewIdentity)
+
+  return (
+    <Card className={needsSetup ? 'border-amber-300 bg-amber-50/40 dark:border-amber-800 dark:bg-amber-950/20' : undefined}>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <Smartphone className="h-4 w-4" />
+          Aquest dispositiu
+          {needsSetup && (
+            <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/60 dark:text-amber-100">
+              Per configurar
+            </span>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        {needsSetup && (
+          <div className="rounded-lg border border-amber-300 bg-amber-100/70 px-3 py-2 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-100">
+            Encara tens el nom per defecte. Canvia'l per distingir millor aquest dispositiu quan hi hagi activitat o sync.
+          </div>
+        )}
+        <p className="text-sm text-muted-foreground">
+          Aquesta identitat és local al dispositiu actual. L’id és estable i el nom es pot editar per fer-lo més reconeixible quan arribi a activitat o sync.
+        </p>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="device-id">Id del dispositiu</Label>
+          <div
+            id="device-id"
+            className="rounded-md border bg-muted/40 px-3 py-2 font-mono text-xs text-muted-foreground break-all"
+          >
+            {identity.deviceId}
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="device-label">Nom del dispositiu</Label>
+          <Input
+            id="device-label"
+            value={deviceLabel}
+            onChange={(e) => setDeviceLabel(e.target.value)}
+            placeholder={defaultLabel}
+          />
+          <p className="text-xs text-muted-foreground">
+            Si el deixes buit, es farà servir un fallback distingible com <strong>{defaultLabel}</strong>.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" onClick={handleSave}>Desar nom</Button>
+          <Button type="button" variant="outline" onClick={handleReset}>Restaurar fallback</Button>
+          {status === 'saved' && <p className="text-sm text-success self-center">Nom del dispositiu desat.</p>}
+          {status === 'reset' && <p className="text-sm text-success self-center">Fallback restaurat.</p>}
+        </div>
       </CardContent>
     </Card>
   )
@@ -205,6 +322,7 @@ function SyncPreferencesCard() {
 
 export function Preferences() {
   const navigate = useNavigate()
+  const [deviceIdentity, setDeviceIdentity] = useState(() => getLocalDeviceIdentity())
 
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6">
@@ -226,11 +344,24 @@ export function Preferences() {
       <Card>
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
-            <div className="rounded-full bg-indigo-50 p-2 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-300">
+            <div className="relative rounded-full bg-indigo-50 p-2 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-300">
               <Settings2 className="h-5 w-5" />
+              {needsDeviceLabelSetup(deviceIdentity) && (
+                <span
+                  className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-destructive"
+                  aria-hidden="true"
+                />
+              )}
             </div>
             <div className="space-y-1">
-              <p className="font-medium">Preferències globals</p>
+              <p className="font-medium flex items-center gap-2">
+                Preferències globals
+                {needsDeviceLabelSetup(deviceIdentity) && (
+                  <span className="inline-flex items-center rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                    Pendent
+                  </span>
+                )}
+              </p>
               <p className="text-sm text-muted-foreground">
                 Aquestes opcions s'apliquen al dispositiu actual. No canvien les dades dels grups ni es comparteixen amb altres persones.
               </p>
@@ -240,6 +371,8 @@ export function Preferences() {
       </Card>
 
       <ThemePreferenceCard />
+
+      <DeviceIdentityCard identity={deviceIdentity} onIdentityChange={setDeviceIdentity} />
 
       <Card>
         <CardHeader>
