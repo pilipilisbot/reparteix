@@ -196,29 +196,6 @@ export function ExpenseList({ group }: ExpenseListProps) {
     return () => document.removeEventListener('click', handleDocumentClick)
   }, [])
 
-  const startDuplicate = (expense: Expense) => {
-    setEditingExpenseId(null)
-    setDescription(expense.description)
-    setAmount(expense.amount.toString())
-    setPayerId(expense.payerId)
-    setSplitAmong(expense.splitAmong)
-    setSplitType(expense.splitType ?? 'equal')
-    setProportions(
-      Object.fromEntries(
-        expense.splitAmong.map((id) => [id, String(expense.splitProportions?.[id] ?? 1)]),
-      ),
-    )
-    setFixedAmounts(
-      Object.fromEntries(
-        expense.splitAmong.map((id) => [id, String(expense.splitFixedAmounts?.[id] ?? '')]),
-      ),
-    )
-    setReceiptImage(expense.receiptImage ?? null)
-    setReceiptError(null)
-    setShowForm(true)
-    setOpenExpenseMenuId(null)
-  }
-
   const resetForm = () => {
     receiptLoadRequestRef.current += 1
     setEditingExpenseId(null)
@@ -278,6 +255,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
     setReceiptImage(options?.duplicate ? null : expense.receiptImage ?? null)
     setReceiptError(null)
     setShowForm(true)
+    setOpenExpenseMenuId(null)
   }
 
   const startEdit = (expense: Expense) => {
