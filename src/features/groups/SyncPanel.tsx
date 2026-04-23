@@ -308,22 +308,20 @@ function HandoffCard({
   onCancel: () => void
 }) {
   return (
-    <div className={`rounded-[24px] border ${embedded ? 'border-primary/20 bg-primary/5' : 'bg-muted/20'} p-3 sm:p-4`}>
-      <div className="space-y-3">
-        <div className="rounded-2xl border bg-background/95 px-4 py-3">
-          <div className="flex items-start gap-3">
-            <div className="rounded-full bg-success/10 p-2 text-success">
-              <CheckCircle2 className="h-4 w-4" />
-            </div>
-            <div className="min-w-0 space-y-1">
-              <p className="text-sm font-semibold text-foreground">Sincronització activa</p>
-              <p className="text-xs leading-5 text-muted-foreground">Escaneja aquest QR a l’altre dispositiu o obre-hi l’enllaç temporal.</p>
-            </div>
+    <div className={`rounded-[28px] ${embedded ? 'bg-primary/5' : 'bg-muted/20'} px-4 py-4 sm:px-5`}>
+      <div className="space-y-4">
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 rounded-full bg-success/10 p-2 text-success">
+            <CheckCircle2 className="h-4 w-4" />
+          </div>
+          <div className="min-w-0 space-y-1">
+            <p className="text-sm font-semibold text-foreground">Sincronització activa</p>
+            <p className="text-sm leading-5 text-muted-foreground">Escaneja aquest QR a l’altre dispositiu o obre-hi l’enllaç temporal.</p>
           </div>
         </div>
 
-        <div className="flex flex-col items-center gap-3 text-center">
-          <div className="w-full max-w-[220px] rounded-[24px] border bg-white p-2 shadow-sm">
+        <div className="flex flex-col items-center text-center">
+          <div className="w-full max-w-[208px] bg-white p-2 shadow-sm ring-1 ring-black/10 rounded-[24px]">
             {qrMarkup ? (
               <div
                 className="qr-frame aspect-square w-full overflow-hidden rounded-[18px] bg-white"
@@ -336,31 +334,31 @@ function HandoffCard({
             )}
           </div>
 
-          <div className="space-y-1">
+          <div className="mt-3 space-y-1">
             <p className="text-base font-semibold text-foreground">Escaneja el QR</p>
-            <p className="text-sm text-muted-foreground">Si no et va bé, comparteix o copia l’enllaç temporal.</p>
+            <p className="text-sm leading-5 text-muted-foreground">Si no et va bé, comparteix o copia l’enllaç temporal.</p>
           </div>
         </div>
 
-        <div className="space-y-2">
-          <div className="rounded-2xl border bg-background px-3 py-2.5">
+        <div className="space-y-2.5">
+          <div className="bg-background/80 px-3 py-2.5 rounded-2xl">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Link2 className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">{syncUrl.replace(/^https?:\/\//, '')}</span>
             </div>
           </div>
 
-          <Button onClick={onShare} className="w-full">
+          <Button onClick={onShare} className="w-full shadow-sm">
             {sharedLinkStatus !== 'idle' ? <Check className="mr-2 h-4 w-4" /> : <Share2 className="mr-2 h-4 w-4" />}
             {sharedLinkStatus === 'shared' ? 'Enllaç compartit' : sharedLinkStatus === 'copied' ? 'Enllaç copiat' : 'Compartir enllaç'}
           </Button>
 
-          <Button type="button" variant="outline" onClick={onCopy} className="w-full">
+          <Button type="button" variant="outline" onClick={onCopy} className="w-full bg-background/90">
             {linkCopied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
             {linkCopied ? 'Enllaç copiat' : 'Copiar enllaç'}
           </Button>
 
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-left text-xs text-emerald-950 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-100">
+          <div className="bg-emerald-50/80 px-3 py-2.5 rounded-2xl text-left text-xs text-emerald-950 dark:bg-emerald-950/30 dark:text-emerald-100">
             <div className="flex items-center gap-2 font-medium">
               <ShieldCheck className="h-3.5 w-3.5" />
               <span>Privat per disseny</span>
