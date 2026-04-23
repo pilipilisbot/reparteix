@@ -41,6 +41,14 @@ const MAX_RECEIPT_DIMENSION = 1600
 const MAX_RECEIPT_SOURCE_PIXELS = 24_000_000
 const RECEIPT_OUTPUT_QUALITY = 0.78
 
+function getTodayLocalDate(): string {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 async function readBlobAsDataUrl(blob: Blob): Promise<string> {
   return await new Promise<string>((resolve, reject) => {
     const reader = new FileReader()
@@ -143,7 +151,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
   const [proportions, setProportions] = useState<Record<string, string>>({})
   const [fixedAmounts, setFixedAmounts] = useState<Record<string, string>>({})
   const [showForm, setShowForm] = useState(false)
-  const [expenseDate, setExpenseDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [expenseDate, setExpenseDate] = useState(() => getTodayLocalDate())
   const [receiptImage, setReceiptImage] = useState<string | null>(null)
   const [viewingReceipt, setViewingReceipt] = useState<ViewingReceiptState | null>(null)
   const [receiptError, setReceiptError] = useState<string | null>(null)
@@ -206,7 +214,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
     setSplitType('equal')
     setProportions({})
     setFixedAmounts({})
-    setExpenseDate(new Date().toISOString().split('T')[0])
+    setExpenseDate(getTodayLocalDate())
     setReceiptImage(null)
     setReceiptError(null)
     setShowForm(false)
@@ -251,7 +259,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
         expense.splitAmong.map((id) => [id, String(expense.splitFixedAmounts?.[id] ?? '')]),
       ),
     )
-    setExpenseDate(options?.duplicate ? new Date().toISOString().split('T')[0] : expense.date)
+    setExpenseDate(options?.duplicate ? getTodayLocalDate() : expense.date)
     setReceiptImage(options?.duplicate ? null : expense.receiptImage ?? null)
     setReceiptError(null)
     setShowForm(true)
@@ -549,12 +557,17 @@ export function ExpenseList({ group }: ExpenseListProps) {
                         {symbol}
                       </span>
                     </div>
-                    <Input
-                      type="date"
-                      value={expenseDate}
-                      onChange={(e) => setExpenseDate(e.target.value)}
-                      required
-                    />
+                    <div className="space-y-1">
+                      <Label htmlFor="expense-date">Data</Label>
+                      <Input
+                        id="expense-date"
+                        type="date"
+                        aria-label="Data de la despesa"
+                        value={expenseDate}
+                        onChange={(e) => setExpenseDate(e.target.value)}
+                        required
+                      />
+                    </div>
                   </div>
                   <div className="space-y-1">
                     <Label>Qui ha pagat?</Label>
@@ -956,16 +969,29 @@ export function ExpenseList({ group }: ExpenseListProps) {
                                     }}
                                     className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
                                     aria-label="Més accions"
+                                    aria-haspopup="menu"
+                                    aria-expanded={openExpenseMenuId === expense.id}
+                                    aria-controls={`expense-actions-${expense.id}`}
                                   >
                                     <MoreHorizontal className="h-4 w-4" />
                                   </Button>
                                   {openExpenseMenuId === expense.id && (
                                     <div
+                                      id={`expense-actions-${expense.id}`}
+                                      role="menu"
+                                      aria-label={`Accions per a ${expense.description}`}
                                       className="absolute right-0 top-8 z-20 min-w-[10rem] rounded-xl border bg-popover p-1 shadow-lg"
                                       onClick={(e) => e.stopPropagation()}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Escape') {
+                                          e.stopPropagation()
+                                          setOpenExpenseMenuId(null)
+                                        }
+                                      }}
                                     >
                                       <button
                                         type="button"
+                                        role="menuitem"
                                         onClick={() => startEdit(expense)}
                                         className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-foreground hover:bg-muted"
                                       >
@@ -974,6 +1000,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
                                       </button>
                                       <button
                                         type="button"
+                                        role="menuitem"
                                         onClick={() => startDuplicate(expense)}
                                         className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-foreground hover:bg-muted"
                                       >
@@ -984,6 +1011,8 @@ export function ExpenseList({ group }: ExpenseListProps) {
                                         <AlertDialogTrigger asChild>
                                           <button
                                             type="button"
+                                            role="menuitem"
+                                            onClick={() => setOpenExpenseMenuId(null)}
                                             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-destructive hover:bg-muted"
                                           >
                                             <Trash2 className="h-4 w-4" />
