@@ -44,9 +44,12 @@ function FileHandlerBridge() {
   return null
 }
 
-function App() {
+function ThemeBridge() {
   useTheme()
+  return null
+}
 
+function App() {
   return (
     <HashRouter>
       <div className="flex min-h-screen flex-col">
@@ -64,6 +67,7 @@ function App() {
         </Suspense>
         <Footer />
       </div>
+      <ThemeBridge />
       <FileHandlerBridge />
       <PWAInstallPrompt />
       <PWAUpdatePrompt />

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useSyncExternalStore } from 'react'
+import { useCallback, useLayoutEffect, useSyncExternalStore } from 'react'
 
 type Theme = 'light' | 'dark' | 'system'
 
@@ -35,15 +35,38 @@ function applyTheme(theme: Theme) {
 
 let currentTheme: Theme = typeof window === 'undefined' ? 'system' : getStoredTheme()
 const listeners = new Set<() => void>()
+let mediaQueryCleanup: (() => void) | null = null
 
 function emit() {
   listeners.forEach((listener) => listener())
 }
 
+function ensureSystemThemeListener() {
+  if (typeof window === 'undefined' || mediaQueryCleanup) return
+
+  const media = window.matchMedia(MEDIA_QUERY)
+  const handleChange = () => {
+    if (currentTheme === 'system') {
+      applyTheme('system')
+      emit()
+    }
+  }
+
+  media.addEventListener('change', handleChange)
+  mediaQueryCleanup = () => {
+    media.removeEventListener('change', handleChange)
+    mediaQueryCleanup = null
+  }
+}
+
 function subscribe(listener: () => void) {
   listeners.add(listener)
+  ensureSystemThemeListener()
   return () => {
     listeners.delete(listener)
+    if (listeners.size === 0 && mediaQueryCleanup) {
+      mediaQueryCleanup()
+    }
   }
 }
 
@@ -54,25 +77,9 @@ function getSnapshot(): Theme {
 export function useTheme() {
   const theme = useSyncExternalStore<Theme>(subscribe, getSnapshot, () => 'system')
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     applyTheme(theme)
   }, [theme])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    const media = window.matchMedia(MEDIA_QUERY)
-    const handleChange = () => {
-      if (currentTheme === 'system') {
-        applyTheme('system')
-        emit()
-      }
-    }
-
-    applyTheme(currentTheme)
-    media.addEventListener('change', handleChange)
-    return () => media.removeEventListener('change', handleChange)
-  }, [])
 
   const setTheme = useCallback((next: Theme) => {
     currentTheme = next
