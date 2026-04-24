@@ -1,3 +1,10 @@
+# [1.47.0](https://github.com/reparteix/reparteix/compare/v1.46.0...v1.47.0) (2026-04-24)
+
+
+### Features
+
+* personalize footer with Emporda and GitHub link ([15ba949](https://github.com/reparteix/reparteix/commit/15ba94988e95a25b7e48165bf2846935da9ac465))
+
 # [1.46.0](https://github.com/reparteix/reparteix/compare/v1.45.0...v1.46.0) (2026-04-23)
 
 
