@@ -1,3 +1,12 @@
+## [1.47.1](https://github.com/reparteix/reparteix/compare/v1.47.0...v1.47.1) (2026-04-24)
+
+
+### Bug Fixes
+
+* apply theme hook from app root ([0aca6c7](https://github.com/reparteix/reparteix/commit/0aca6c7a9de5ec86658803a1426015e9197a19d6))
+* harden system theme sync ([576a784](https://github.com/reparteix/reparteix/commit/576a784e9b7988badbabf15b94a03a4ca7dbf191))
+* make system theme follow OS preference ([8b6bfb1](https://github.com/reparteix/reparteix/commit/8b6bfb151b5041cd0e1c94d6d246e5f6c7bc487e))
+
 # [1.47.0](https://github.com/reparteix/reparteix/compare/v1.46.0...v1.47.0) (2026-04-24)
 
 
