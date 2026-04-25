@@ -126,7 +126,11 @@ export function createSyncSession(
   const MAX_INCOMING_TRANSFER_AGE_MS = 60_000
   let outgoingTransferInFlight = false
   let incomingTransferInFlight = false
-  const peerSyncState = new Map<string, { localDataSent: boolean; localDataApplied: boolean }>()
+  const peerSyncState = new Map<string, {
+    localDataSent: boolean
+    localDataApplied: boolean
+    remoteAppliedLocalData: boolean
+  }>()
   const incomingPayloadChunks = new Map<string, {
     remotePeerId: string
     groupId: string
@@ -159,7 +163,11 @@ export function createSyncSession(
     const existing = peerSyncState.get(remotePeerId)
     if (existing) return existing
 
-    const created = { localDataSent: false, localDataApplied: false }
+    const created = {
+      localDataSent: false,
+      localDataApplied: false,
+      remoteAppliedLocalData: false,
+    }
     peerSyncState.set(remotePeerId, created)
     return created
   }
@@ -452,6 +460,10 @@ export function createSyncSession(
 
     if (message.status === 'ok') {
       if (status.state === 'syncing') {
+        if (syncState) {
+          syncState.remoteAppliedLocalData = true
+        }
+
         if (syncState?.localDataApplied) {
           update({
             state: 'completed',
@@ -498,6 +510,7 @@ export function createSyncSession(
   }
 
   function handlePeerDisconnected(remotePeerId: string) {
+    const syncState = peerSyncState.get(remotePeerId)
     peerSyncState.delete(remotePeerId)
     removeRemotePeer(remotePeerId)
     for (const [key, transfer] of incomingPayloadChunks.entries()) {
@@ -509,6 +522,23 @@ export function createSyncSession(
       const wasTransferring = outgoingTransferInFlight || incomingTransferInFlight
       outgoingTransferInFlight = false
       incomingTransferInFlight = false
+
+      const canTreatAsCompleted = !wasTransferring && (
+        syncState?.localDataApplied ||
+        syncState?.remoteAppliedLocalData
+      )
+
+      if (canTreatAsCompleted) {
+        update({
+          state: 'completed',
+          lastSuccessAt: new Date().toISOString(),
+          message: syncState?.localDataApplied
+            ? 'Sincronització completada. L’altre dispositiu ha tancat la sessió després d’aplicar els canvis.'
+            : 'Sincronització completada. L’altre dispositiu ha rebut i aplicat les dades abans de tancar la sessió.',
+        })
+        return
+      }
+
       update({
         state: 'error',
         error: wasTransferring
