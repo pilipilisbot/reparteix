@@ -20,6 +20,12 @@ import {
 } from '@/components/ui/alert-dialog'
 import { getLocalDeviceIdentity, needsDeviceLabelSetup } from '@/lib/device-identity'
 
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  EUR: '€',
+  USD: '$',
+  GBP: '£',
+}
+
 export function GroupList() {
   const { groups, groupTotals, loadGroups, addGroup, deleteGroup, importGroup } = useStore()
   const hasPendingDeviceSetup = needsDeviceLabelSetup(getLocalDeviceIdentity())
@@ -96,7 +102,11 @@ export function GroupList() {
   const archivedGroups = groups.filter((g) => g.archived)
   const hasGroups = groups.length > 0
 
-  const renderGroupCard = (group: (typeof groups)[number]) => (
+  const renderGroupCard = (group: (typeof groups)[number]) => {
+    const total = groupTotals[group.id] ?? 0
+    const currencySymbol = CURRENCY_SYMBOLS[group.currency] ?? group.currency
+
+    return (
     <Card
       key={group.id}
       className={`hover:shadow-md transition-shadow duration-150 ${group.archived ? 'opacity-70' : ''}`}
@@ -127,10 +137,9 @@ export function GroupList() {
             </p>
           </div>
           <div className="shrink-0 flex flex-col items-end gap-1 text-right">
-            <Badge variant="secondary">{group.currency}</Badge>
-            {(groupTotals[group.id] ?? 0) > 0 && (
+            {total > 0 && (
               <span className="text-xs text-muted-foreground max-w-[88px] break-words">
-                {groupTotals[group.id].toFixed(2)}&nbsp;{group.currency}
+                {total.toFixed(2)}&nbsp;{currencySymbol}
               </span>
             )}
           </div>
@@ -216,7 +225,8 @@ export function GroupList() {
         </div>
       </div>
     </Card>
-  )
+    )
+  }
 
   return (
     <div className="min-h-screen bg-muted/50">
