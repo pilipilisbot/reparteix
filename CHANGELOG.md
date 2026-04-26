@@ -1,3 +1,10 @@
+# [1.50.0](https://github.com/reparteix/reparteix/compare/v1.49.2...v1.50.0) (2026-04-26)
+
+
+### Features
+
+* duplicate groups as a starting point ([#173](https://github.com/reparteix/reparteix/issues/173)) ([99941c6](https://github.com/reparteix/reparteix/commit/99941c65170fef7cb4c0cff9f981756635111cd5))
+
 ## [1.49.2](https://github.com/reparteix/reparteix/compare/v1.49.1...v1.49.2) (2026-04-26)
 
 
