@@ -126,6 +126,7 @@ export function createSyncSession(
   const MAX_INCOMING_TRANSFER_AGE_MS = 60_000
   let outgoingTransferInFlight = false
   let incomingTransferInFlight = false
+  let hadLocalGroupAtSessionStart: boolean | null = null
   const peerSyncState = new Map<string, {
     localDataSent: boolean
     localDataApplied: boolean
@@ -392,6 +393,11 @@ export function createSyncSession(
     update({ message: 'Preparant dades per enviar…' })
 
     try {
+      if (hadLocalGroupAtSessionStart === false) {
+        conn.send(createSyncAckMessage(groupId, 'no-data'))
+        return
+      }
+
       // Build envelope from local data
       const envelope = await buildEnvelope()
       if (!envelope) {
@@ -559,6 +565,14 @@ export function createSyncSession(
 
   // ─── Helpers ──────────────────────────────────────────────────────────
 
+  async function loadLocalGroupExists(): Promise<boolean> {
+    try {
+      return (await reparteix.getGroup(groupId)) !== null
+    } catch {
+      return false
+    }
+  }
+
   async function buildEnvelope(): Promise<SyncEnvelopeV1 | null> {
     try {
       const group = await reparteix.getGroup(groupId)
@@ -616,6 +630,7 @@ export function createSyncSession(
       })
 
       try {
+        hadLocalGroupAtSessionStart = await loadLocalGroupExists()
         const roomPeerId = await buildGroupPeerId()
         const peerId = await peerManager.init(roomPeerId)
         update({
@@ -641,6 +656,7 @@ export function createSyncSession(
       })
 
       try {
+        hadLocalGroupAtSessionStart = await loadLocalGroupExists()
         await peerManager.init()
         update({
           state: 'connecting',
@@ -671,6 +687,7 @@ export function createSyncSession(
       })
 
       try {
+        hadLocalGroupAtSessionStart = await loadLocalGroupExists()
         const peerId = await peerManager.init(roomPeerId)
         update({
           state: 'waiting-for-peer',
@@ -688,6 +705,7 @@ export function createSyncSession(
       }
 
       try {
+        hadLocalGroupAtSessionStart = await loadLocalGroupExists()
         await peerManager.init()
         update({
           state: 'connecting',
@@ -704,6 +722,7 @@ export function createSyncSession(
 
     /** Clean up all resources. */
     destroy() {
+      hadLocalGroupAtSessionStart = null
       peerSyncState.clear()
       peerManager.destroy()
       listeners.clear()
