@@ -1,3 +1,10 @@
+# [1.49.0](https://github.com/reparteix/reparteix/compare/v1.48.0...v1.49.0) (2026-04-26)
+
+
+### Features
+
+* refine group list actions ([fe8f8a9](https://github.com/reparteix/reparteix/commit/fe8f8a98eed7f457a0e70d3b0fb4d86e560cb47d))
+
 # [1.48.0](https://github.com/reparteix/reparteix/compare/v1.47.1...v1.48.0) (2026-04-24)
 
 
