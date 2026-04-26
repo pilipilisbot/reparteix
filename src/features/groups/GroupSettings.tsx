@@ -6,17 +6,6 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -59,6 +48,8 @@ function GroupSettingsForm({ group, groupId }: GroupSettingsFormProps) {
   const [currency, setCurrency] = useState(group.currency)
   const [exportStatus, setExportStatus] = useState<'idle' | 'ok' | 'error'>('idle')
   const [shareStatus, setShareStatus] = useState<'idle' | 'shared' | 'copied' | 'error'>('idle')
+  const [isDeleteConfirming, setIsDeleteConfirming] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const isArchived = group.archived
 
@@ -75,8 +66,13 @@ function GroupSettingsForm({ group, groupId }: GroupSettingsFormProps) {
   }
 
   const handleDelete = async () => {
-    await deleteGroup(groupId)
-    navigate('/')
+    setIsDeleting(true)
+    try {
+      await deleteGroup(groupId)
+      navigate('/')
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   const handleArchive = async () => {
@@ -326,36 +322,45 @@ function GroupSettingsForm({ group, groupId }: GroupSettingsFormProps) {
         <CardHeader>
           <CardTitle className="text-destructive text-base">Zona de perill</CardTitle>
         </CardHeader>
-        <CardContent>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="destructive"
-                className="w-full"
-                type="button"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Eliminar grup
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Eliminar grup</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Estàs segur que vols eliminar el grup &quot;{group.name}&quot;? Aquesta acció no es pot desfer.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel·lar</AlertDialogCancel>
-                <AlertDialogAction
+        <CardContent className="space-y-3">
+          {isDeleteConfirming ? (
+            <>
+              <p className="text-sm text-muted-foreground">
+                Estàs a punt d'eliminar el grup &quot;{group.name}&quot;. Aquesta acció no es pot desfer.
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="destructive"
+                  className="flex-1"
+                  type="button"
                   onClick={handleDelete}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  disabled={isDeleting}
                 >
-                  Eliminar
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {isDeleting ? 'Eliminant…' : 'Confirmar eliminació'}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  type="button"
+                  onClick={() => setIsDeleteConfirming(false)}
+                  disabled={isDeleting}
+                >
+                  Cancel·lar
+                </Button>
+              </div>
+            </>
+          ) : (
+            <Button
+              variant="destructive"
+              className="w-full"
+              type="button"
+              onClick={() => setIsDeleteConfirming(true)}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Eliminar grup
+            </Button>
+          )}
         </CardContent>
       </Card>
     </>
