@@ -1,3 +1,10 @@
+## [1.49.2](https://github.com/reparteix/reparteix/compare/v1.49.1...v1.49.2) (2026-04-26)
+
+
+### Bug Fixes
+
+* restore group deletion from settings ([#175](https://github.com/reparteix/reparteix/issues/175)) ([c90531a](https://github.com/reparteix/reparteix/commit/c90531ab1629fb49d666e0c1f63f58fbf74db339))
+
 ## [1.49.1](https://github.com/reparteix/reparteix/compare/v1.49.0...v1.49.1) (2026-04-26)
 
 
