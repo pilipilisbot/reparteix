@@ -129,13 +129,13 @@ export function GroupList() {
               {group.members.filter((m) => !m.deleted).length} membres
             </p>
           </div>
-          <div className="w-24 shrink-0 self-center text-right">
+          <div className="w-20 shrink-0 self-center text-right">
             {total > 0 && (
-              <span className="inline-flex items-baseline justify-end gap-1 whitespace-nowrap">
-                <span className="text-base font-semibold tracking-tight text-foreground">
+              <span className="inline-flex items-baseline justify-end gap-1 whitespace-nowrap text-sm">
+                <span className="font-medium text-foreground/90">
                   {total.toFixed(2)}
                 </span>
-                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   {group.currency}
                 </span>
               </span>
