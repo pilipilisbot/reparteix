@@ -131,6 +131,7 @@ export function createSyncSession(
     localDataSent: boolean
     localDataApplied: boolean
     remoteAppliedLocalData: boolean
+    remoteHadNoData: boolean
   }>()
   const incomingPayloadChunks = new Map<string, {
     remotePeerId: string
@@ -168,6 +169,7 @@ export function createSyncSession(
       localDataSent: false,
       localDataApplied: false,
       remoteAppliedLocalData: false,
+      remoteHadNoData: false,
     }
     peerSyncState.set(remotePeerId, created)
     return created
@@ -470,11 +472,13 @@ export function createSyncSession(
           syncState.remoteAppliedLocalData = true
         }
 
-        if (syncState?.localDataApplied) {
+        if (syncState?.localDataApplied || syncState?.remoteHadNoData) {
           update({
             state: 'completed',
             lastSuccessAt: new Date().toISOString(),
-            message: 'Sincronització completada. Els dos dispositius ja estan al dia.',
+            message: syncState?.localDataApplied
+              ? 'Sincronització completada. Els dos dispositius ja estan al dia.'
+              : 'Sincronització completada. L’altre dispositiu ha aplicat les dades i no tenia canvis addicionals per enviar.',
           })
           return
         }
@@ -485,7 +489,11 @@ export function createSyncSession(
       }
     } else if (message.status === 'no-data') {
       if (status.state === 'syncing') {
-        if (syncState?.localDataApplied || syncState?.localDataSent) {
+        if (syncState) {
+          syncState.remoteHadNoData = true
+        }
+
+        if (syncState?.localDataApplied || syncState?.localDataSent || syncState?.remoteAppliedLocalData) {
           update({
             state: 'completed',
             lastSuccessAt: new Date().toISOString(),
