@@ -6,6 +6,17 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -64,7 +75,6 @@ function GroupSettingsForm({ group, groupId }: GroupSettingsFormProps) {
   }
 
   const handleDelete = async () => {
-    if (!window.confirm('Segur que vols eliminar el grup? Aquesta acció no es pot desfer.')) return
     await deleteGroup(groupId)
     navigate('/')
   }
@@ -317,15 +327,35 @@ function GroupSettingsForm({ group, groupId }: GroupSettingsFormProps) {
           <CardTitle className="text-destructive text-base">Zona de perill</CardTitle>
         </CardHeader>
         <CardContent>
-          <Button
-            variant="destructive"
-            className="w-full"
-            type="button"
-            onClick={handleDelete}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Eliminar grup
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="destructive"
+                className="w-full"
+                type="button"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Eliminar grup
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Eliminar grup</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Estàs segur que vols eliminar el grup &quot;{group.name}&quot;? Aquesta acció no es pot desfer.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel·lar</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Eliminar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </CardContent>
       </Card>
     </>
@@ -365,4 +395,3 @@ export function GroupSettings() {
     </div>
   )
 }
-
