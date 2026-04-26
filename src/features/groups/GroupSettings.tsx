@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Trash2, Download, Share2, Archive, ArchiveRestore } from 'lucide-react'
+import { ArrowLeft, Trash2, Download, Share2, Archive, ArchiveRestore, Copy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -208,6 +208,28 @@ function GroupSettingsForm({ group, groupId }: GroupSettingsFormProps) {
 
       <Card>
         <CardHeader>
+          <CardTitle className="text-base">Crear un grup nou a partir d'aquest</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <p className="text-sm text-muted-foreground">
+            Duplica membres i configuració del grup per començar-ne un de nou sense arrossegar despeses ni pagaments anteriors.
+          </p>
+          <Button
+            variant="outline"
+            className="w-full"
+            type="button"
+            onClick={() => navigate(`/group/${groupId}/duplicate`)}
+          >
+            <Copy className="h-4 w-4 mr-2" />
+            Duplicar grup
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Separator className="my-8" />
+
+      <Card>
+        <CardHeader>
           <CardTitle className="text-base">Guardar una còpia del grup</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
@@ -365,4 +387,3 @@ export function GroupSettings() {
     </div>
   )
 }
-

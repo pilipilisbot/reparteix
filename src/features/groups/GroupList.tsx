@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../../store'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Trash2, Users, Upload, Archive, ChevronDown, Settings, MoreHorizontal } from 'lucide-react'
+import { Plus, Trash2, Users, Upload, Archive, ChevronDown, Settings, MoreHorizontal, Copy } from 'lucide-react'
 import { ONBOARDING_COMPLETED_KEY } from './OnboardingWizard'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -180,6 +180,19 @@ export function GroupList() {
               >
                 <Settings className="h-4 w-4" />
                 Configuració
+              </button>
+
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setOpenGroupMenuId(null)
+                  navigate(`/group/${group.id}/duplicate`)
+                }}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-foreground hover:bg-muted"
+              >
+                <Copy className="h-4 w-4" />
+                Duplicar grup
               </button>
 
               <AlertDialog>

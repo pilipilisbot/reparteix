@@ -80,6 +80,51 @@ describe('reparteix SDK', () => {
         reparteix.updateGroup('non-existent', { name: 'Test' }),
       ).rejects.toThrow()
     })
+
+    it('duplicates a group as a clean starting point', async () => {
+      const source = await reparteix.createGroup('Pis compartit')
+      await reparteix.updateGroup(source.id, {
+        description: 'Curs 2026',
+        icon: '🏠',
+        currency: 'USD',
+      })
+      const anna = await reparteix.addMember(source.id, 'Anna')
+      const bernat = await reparteix.addMember(source.id, 'Bernat')
+      await reparteix.addExpense({
+        groupId: source.id,
+        description: 'Internet',
+        amount: 40,
+        payerId: anna.id,
+        splitAmong: [anna.id, bernat.id],
+        date: '2026-04-01',
+      })
+
+      const duplicate = await reparteix.duplicateGroup(source.id, {
+        name: 'Pis compartit 2027',
+        members: [
+          { name: 'Anna' },
+          { name: 'Bernat' },
+          { name: 'Clara' },
+        ],
+      })
+
+      expect(duplicate.id).not.toBe(source.id)
+      expect(duplicate.name).toBe('Pis compartit 2027')
+      expect(duplicate.description).toBe('Curs 2026')
+      expect(duplicate.icon).toBe('🏠')
+      expect(duplicate.currency).toBe('USD')
+      expect(duplicate.members.map((member) => member.name)).toEqual(['Anna', 'Bernat', 'Clara'])
+
+      const duplicateExpenses = await reparteix.listExpenses(duplicate.id)
+      const duplicatePayments = await reparteix.listPayments(duplicate.id)
+      expect(duplicateExpenses).toEqual([])
+      expect(duplicatePayments).toEqual([])
+
+      const duplicateActivity = await reparteix.listActivity(duplicate.id)
+      expect(duplicateActivity).toHaveLength(4)
+      expect(duplicateActivity.filter((entry) => entry.action === 'group.created')).toHaveLength(1)
+      expect(duplicateActivity.filter((entry) => entry.action === 'member.added')).toHaveLength(3)
+    })
   })
 
   // ─── Archive / Unarchive ─────────────────────────────────────────

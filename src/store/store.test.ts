@@ -110,6 +110,30 @@ describe('groups', () => {
     expect(updated.currency).toBe('USD')
   })
 
+  it('duplicateGroup crea un grup nou editable a partir d’un existent', async () => {
+    const { addGroup, addMember, updateGroup, duplicateGroup } = useStore.getState()
+    const source = await addGroup('Casa')
+    await updateGroup(source.id, { description: 'Pis compartit', icon: '🏠', currency: 'GBP' })
+    await addMember(source.id, 'Anna')
+    await addMember(source.id, 'Bernat')
+
+    const duplicate = await duplicateGroup(source.id, {
+      name: 'Casa estiu',
+      description: 'Vacances',
+      icon: '🌴',
+      currency: 'EUR',
+      members: [{ name: 'Anna' }, { name: 'Clara' }],
+    })
+
+    const created = useStore.getState().groups.find((group) => group.id === duplicate.id)
+    expect(created).toBeTruthy()
+    expect(created?.name).toBe('Casa estiu')
+    expect(created?.description).toBe('Vacances')
+    expect(created?.icon).toBe('🌴')
+    expect(created?.currency).toBe('EUR')
+    expect(created?.members.filter((member) => !member.deleted).map((member) => member.name)).toEqual(['Anna', 'Clara'])
+  })
+
   it("deleteGroup elimina el grup de l'estat", async () => {
     const { addGroup, deleteGroup } = useStore.getState()
     const group = await addGroup('Per esborrar')

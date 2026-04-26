@@ -9,6 +9,7 @@ import { useTheme } from './hooks/useTheme'
 const GroupList = lazy(() => import('./features/groups/GroupList').then((m) => ({ default: m.GroupList })))
 const GroupDetail = lazy(() => import('./features/groups/GroupDetail').then((m) => ({ default: m.GroupDetail })))
 const GroupSettings = lazy(() => import('./features/groups/GroupSettings').then((m) => ({ default: m.GroupSettings })))
+const DuplicateGroup = lazy(() => import('./features/groups/DuplicateGroup').then((m) => ({ default: m.DuplicateGroup })))
 const Preferences = lazy(() => import('./features/groups/Preferences').then((m) => ({ default: m.Preferences })))
 const ImportFromUrl = lazy(() => import('./features/groups/ImportFromUrl').then((m) => ({ default: m.ImportFromUrl })))
 const OnboardingWizard = lazy(() => import('./features/groups/OnboardingWizard').then((m) => ({ default: m.OnboardingWizard })))
@@ -59,6 +60,7 @@ function App() {
             <Route path="/onboarding" element={<OnboardingWizard />} />
             <Route path="/group/:groupId" element={<GroupDetail />} />
             <Route path="/group/:groupId/settings" element={<GroupSettings />} />
+            <Route path="/group/:groupId/duplicate" element={<DuplicateGroup />} />
             <Route path="/preferences" element={<Preferences />} />
             <Route path="/import" element={<ImportFromUrl />} />
             <Route path="/import/shared" element={<ShareTargetImport />} />
