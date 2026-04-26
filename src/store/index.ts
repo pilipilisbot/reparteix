@@ -13,6 +13,7 @@ interface AppState {
   loadGroups: () => Promise<void>
   loadGroupData: (groupId: string) => Promise<void>
   addGroup: (name: string) => Promise<Group>
+  duplicateGroup: (sourceGroupId: string, template?: { name?: string; description?: string; icon?: string; currency?: string; members?: Array<{ name: string; color?: string }> }) => Promise<Group>
   updateGroup: (id: string, updates: { name?: string; description?: string; icon?: string; currency?: string; syncPassphrase?: string }) => Promise<void>
   deleteGroup: (id: string) => Promise<void>
   archiveGroup: (id: string) => Promise<void>
@@ -58,6 +59,12 @@ export const useStore = create<AppState>((set, get) => ({
 
   addGroup: async (name: string) => {
     const group = await reparteix.createGroup(name)
+    await get().loadGroups()
+    return group
+  },
+
+  duplicateGroup: async (sourceGroupId: string, template) => {
+    const group = await reparteix.duplicateGroup(sourceGroupId, template)
     await get().loadGroups()
     return group
   },

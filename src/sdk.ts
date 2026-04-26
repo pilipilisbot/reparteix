@@ -141,6 +141,73 @@ export const reparteix = {
     return group
   },
 
+  /** Duplicate an existing group as a fresh starting point without expenses or payments. */
+  async duplicateGroup(
+    sourceGroupId: string,
+    template?: {
+      name?: string
+      description?: string
+      icon?: string
+      currency?: string
+      members?: Array<{ name: string; color?: string }>
+    },
+  ): Promise<Group> {
+    const sourceGroup = await db.groups.get(sourceGroupId)
+    if (!sourceGroup || sourceGroup.deleted) throw new Error(`Group not found: ${sourceGroupId}`)
+
+    const timestamp = now()
+    const sourceMembers = sourceGroup.members.filter((member) => !member.deleted)
+    const memberTemplates = template?.members ?? sourceMembers.map((member) => ({
+      name: member.name,
+      color: member.color,
+    }))
+
+    const members: Member[] = memberTemplates
+      .map((member, index) => ({
+        id: generateId(),
+        name: member.name.trim(),
+        color: member.color ?? getMemberColor(index),
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        deleted: false,
+      }))
+      .filter((member) => member.name.length > 0)
+
+    const group: Group = {
+      id: generateId(),
+      name: template?.name?.trim() || `${sourceGroup.name} (còpia)`,
+      description: template?.description?.trim() || sourceGroup.description,
+      icon: template?.icon?.trim() || sourceGroup.icon,
+      currency: template?.currency ?? sourceGroup.currency,
+      members,
+      archived: false,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      deleted: false,
+    }
+
+    await db.groups.add(group)
+    await appendActivity({
+      groupId: group.id,
+      entityType: 'group',
+      entityId: group.id,
+      action: 'group.created',
+      after: sanitizeActivitySnapshot(group),
+      meta: { sourceGroupId },
+    })
+    for (const member of members) {
+      await appendActivity({
+        groupId: group.id,
+        entityType: 'member',
+        entityId: member.id,
+        action: 'member.added',
+        after: sanitizeActivitySnapshot(member),
+        meta: { memberName: member.name, sourceGroupId },
+      })
+    }
+    return group
+  },
+
   /** Update group metadata (name, description, icon, currency, syncPassphrase). Throws if the group is archived. */
   async updateGroup(
     id: string,
