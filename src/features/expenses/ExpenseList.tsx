@@ -24,7 +24,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { reparteix } from '@/sdk'
@@ -153,6 +152,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
   const [showArchived, setShowArchived] = useState(false)
   const [activityEntries, setActivityEntries] = useState<ActivityEntry[]>([])
   const [openExpenseMenuId, setOpenExpenseMenuId] = useState<string | null>(null)
+  const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const modalRef = useRef<HTMLDivElement>(null)
@@ -191,6 +191,7 @@ export function ExpenseList({ group }: ExpenseListProps) {
   const archivedExpenses = expenses.filter((e) => e.archived)
   const visibleExpenses = showArchived ? archivedExpenses : activeExpenses
   const archivableCount = activeExpenses.filter((e) => isExpenseArchivable(e, balances)).length
+  const expensePendingDeletion = deleteExpenseId ? expenses.find((expense) => expense.id === deleteExpenseId) : null
 
   useEffect(() => {
     const handleDocumentClick = () => setOpenExpenseMenuId(null)
@@ -462,6 +463,31 @@ export function ExpenseList({ group }: ExpenseListProps) {
 
   return (
     <div>
+      <AlertDialog open={deleteExpenseId !== null} onOpenChange={(open) => !open && setDeleteExpenseId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar despesa</AlertDialogTitle>
+            <AlertDialogDescription>
+              {expensePendingDeletion
+                ? `Estàs segur que vols eliminar la despesa "${expensePendingDeletion.description}"? Aquesta acció no es pot desfer.`
+                : 'Estàs segur que vols eliminar aquesta despesa? Aquesta acció no es pot desfer.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel·lar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (!deleteExpenseId) return
+                await deleteExpense(deleteExpenseId)
+                setDeleteExpenseId(null)
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {activeMembers.length < 2 ? (
         <Card className="mb-5 border-dashed bg-muted/20 shadow-none">
           <CardContent className="py-7 px-5 text-center space-y-4">
@@ -1004,36 +1030,18 @@ export function ExpenseList({ group }: ExpenseListProps) {
                                         <Copy className="h-4 w-4" />
                                         Duplicar
                                       </button>
-                                      <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                          <button
-                                            type="button"
-                                            role="menuitem"
-                                            onClick={() => setOpenExpenseMenuId(null)}
-                                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-destructive hover:bg-muted"
-                                          >
-                                            <Trash2 className="h-4 w-4" />
-                                            Eliminar
-                                          </button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                          <AlertDialogHeader>
-                                            <AlertDialogTitle>Eliminar despesa</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                              Estàs segur que vols eliminar la despesa &quot;{expense.description}&quot;? Aquesta acció no es pot desfer.
-                                            </AlertDialogDescription>
-                                          </AlertDialogHeader>
-                                          <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel·lar</AlertDialogCancel>
-                                            <AlertDialogAction
-                                              onClick={() => deleteExpense(expense.id)}
-                                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                            >
-                                              Eliminar
-                                            </AlertDialogAction>
-                                          </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                      </AlertDialog>
+                                      <button
+                                        type="button"
+                                        role="menuitem"
+                                        onClick={() => {
+                                          setOpenExpenseMenuId(null)
+                                          setDeleteExpenseId(expense.id)
+                                        }}
+                                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-destructive hover:bg-muted"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                        Eliminar
+                                      </button>
                                     </div>
                                   )}
                                 </div>
