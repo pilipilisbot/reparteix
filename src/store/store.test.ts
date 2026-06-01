@@ -234,7 +234,7 @@ describe('expenses', () => {
     const members = group.members
 
     const { addExpense } = useStore.getState()
-    await addExpense({
+    const createdExpense = await addExpense({
       groupId: group.id,
       description: 'Sopar',
       amount: 60,
@@ -244,6 +244,7 @@ describe('expenses', () => {
     })
 
     const { expenses, groupTotals } = useStore.getState()
+    expect(createdExpense.id).toBe(expenses[0].id)
     expect(expenses).toHaveLength(1)
     expect(expenses[0].description).toBe('Sopar')
     expect(expenses[0].amount).toBe(60)
